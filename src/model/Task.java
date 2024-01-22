@@ -4,23 +4,16 @@ import java.util.Objects;
 
 public class Task {
 
-    private String name;
-    private String description;
-    private TaskStatus status;
-    private int id;
+    protected String name;
+    protected String description;
+    protected TaskStatus status;
+    protected int id;
 
 
-    public Task(String name, String description, TaskStatus status){ // конструктор для задач и подзадач
+    public Task(String name, String description){
         this.name = name;
         this.description = description;
-        this.status = status;
-    }
-
-    public Task(Task task){
-        this.id = task.id;
-        this.status = task.status;
-        this.name = task.name;
-        this.description = task.description;
+        this.status = TaskStatus.NEW;
     }
 
     public String getDescription() {
@@ -55,8 +48,6 @@ public class Task {
         this.name = name;
     }
 
-
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -85,6 +76,4 @@ public class Task {
         result = result + ", status=" + status + ", id=" + id +'}';
         return result;
     }
-
-
 }

@@ -7,9 +7,9 @@ public class Epic extends Task {
 
     private ArrayList<Subtask> subtasks;
 
-    public Epic(String name, String description, TaskStatus status) {
-        super(name, description, status);
-
+    public Epic(String name, String description) {
+        super(name, description);
+        this.subtasks = new ArrayList<>();
     }
 
     public ArrayList<Subtask> getSubtasks() {
@@ -37,13 +37,13 @@ public class Epic extends Task {
     @Override
     public String toString() {
         String result = "Epic{" +
-                "name='" + super.getName() + '\'';;
-        if(super.getDescription() != null){
-            result = result + ", description.length = '" + super.getDescription().length() + '\'';
+                "name='" + name + '\'';;
+        if(description != null){
+            result = result + ", description.length = '" + description.length() + '\'';
         }else{
             result = result + ", description = null'" + '\'';
         }
-        result = result + ", status=" + super.getStatus() + ", id=" + super.getId() + ", ";
+        result = result + ", status=" + status + ", id=" + id + ", ";
         if (subtasks != null){
             result = result + "subtasks.size = " + subtasks.size() +'}';
         }else{

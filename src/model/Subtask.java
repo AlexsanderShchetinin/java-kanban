@@ -6,8 +6,8 @@ public class Subtask extends Task {
 
     private Epic epic;
 
-    public Subtask(String name, String description, TaskStatus status, Epic epic) {
-        super(name, description, status);
+    public Subtask(String name, String description, Epic epic) {
+        super(name, description);
         this.epic = epic;
     }
 
@@ -36,13 +36,13 @@ public class Subtask extends Task {
     @Override
     public String toString() {
         String result = "Subtask{" +
-                "name='" + super.getName() + '\'';
+                "name='" + name + '\'';
         if(super.getDescription() != null){
-            result = result + ", description.length='" + super.getDescription().length() + '\'';
+            result = result + ", description.length='" + description.length() + '\'';
         }else{
             result = result + ", description = null'" + '\'';
         }
-        result = result + ", status=" + super.getStatus() + ", id=" + super.getId() + ", epic=" + epic.getName() +'}';
+        result = result + ", status=" + status + ", id=" + id + ", epic=" + epic.getName() +'}';
         return result;
     }
 }

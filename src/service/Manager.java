@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 public class Manager {
 
-    private HashMap<Integer, Task> tasks;
-    private HashMap<Integer, Subtask> subtasks;
-    private HashMap<Integer, Epic> epics;
-    private int identifier;
+    private final HashMap<Integer, Task> tasks;
+    private final HashMap<Integer, Subtask> subtasks;
+    private final HashMap<Integer, Epic> epics;
+    private static int identifier;
 
     public Manager() {
         this.tasks = new HashMap<>();
@@ -89,10 +89,12 @@ public class Manager {
     }
 
     public void clearSubtasks(){
-        for (Subtask subtask : subtasks.values()) {    // удаляем подзадачи из эпиков
-            ArrayList<Subtask> listSubtaskByEpic = subtask.getEpic().getSubtasks();
-            listSubtaskByEpic.remove(subtask);
-            subtask.getEpic().setSubtasks(listSubtaskByEpic);
+        for (Epic epic : epics.values()) {    // удаляем подзадачи из эпиков
+            ArrayList<Subtask> listSubtaskByEpic = epic.getSubtasks();
+            listSubtaskByEpic.clear();
+            epic.setSubtasks(listSubtaskByEpic);
+            epics.remove(epic.getId());
+            epics.put(epic.getId(), checkEpicStatus(epic));
         }
         subtasks.clear();    // удаляем подзадачи
     }
@@ -136,7 +138,7 @@ public class Manager {
         listSubtaskByEpic.remove(subtasks.get(id));
         epicAttached.setSubtasks(listSubtaskByEpic);
         epics.remove(epicAttached.getId());
-        epics.put(epicAttached.getId(), epicAttached);
+        epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
         // удаляем подзадачу
         subtasks.remove(id);
     }
@@ -209,6 +211,10 @@ public class Manager {
         ArrayList<Subtask> subtaskFromEpic = epic.getSubtasks();
         if(subtaskFromEpic != null){
             int SubtasksNumber = epic.getSubtasks().size();
+            if(SubtasksNumber == 0){
+                epic.setStatus(TaskStatus.NEW);
+                return epic;
+            }
             for (Subtask subtask : epic.getSubtasks()) {
                 if (subtask.getStatus() == TaskStatus.NEW && SubtasksNumber == epic.getSubtasks().size()) {
                     epic.setStatus(TaskStatus.NEW);

@@ -11,19 +11,15 @@ public class Main {
         Manager manager = new Manager();
 
         // создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:
-        Task task1 = manager.createTask(new Task("First Task", "Go to gym", TaskStatus.NEW));
-        Task task2 = manager.createTask(new Task("Second Task", "Make kanban",
-                TaskStatus.IN_PROGRESS));
-        Epic epic1 = manager.createEpic(new Epic("First Epic", "Learn to drive a car",
-                TaskStatus.IN_PROGRESS));    // специально указал некоррекный статус
-        System.out.println(manager.getEpic(epic1.getId()));   // проверяем как сменился статус эпика
-        Subtask subtask1 = manager.createSubtask(new Subtask("First Subtask", "Give a license",
-                TaskStatus.NEW, epic1));
-        Subtask subtask2 = manager.createSubtask(new Subtask("Second Subtask", "Buy a car",
-                TaskStatus.NEW, epic1));
-        Epic epic2 = manager.createEpic(new Epic("Second Epic", "Finish school", TaskStatus.NEW));
+        Task task1 = manager.createTask(new Task("First Task", "Go to gym"));
+        Task task2 = manager.createTask(new Task("Second Task", "Make kanban"));
+        Epic epic1 = manager.createEpic(new Epic("First Epic", "Learn to drive a car"));
+        System.out.println(epic1);
+        Subtask subtask1 = manager.createSubtask(new Subtask("First Subtask", "Give a license", epic1));
+        Subtask subtask2 = manager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic1));
+        Epic epic2 = manager.createEpic(new Epic("Second Epic", "Finish school"));
         Subtask subtask3 = manager.createSubtask(new Subtask("Third Subtask", "Finish eleven classes",
-                TaskStatus.IN_PROGRESS, epic2));
+                epic2));
         System.out.println("_____");
         // печатаем списки эпиков, задач и подзадач:
         manager.getTasksList();
@@ -69,6 +65,7 @@ public class Main {
         manager.getSubtaskList();
         System.out.println("____");
         // полностью удаляем подзадачи и смотрим что осталось
+
         manager.clearSubtasks();
         manager.getTasksList();
         manager.getEpicList();
