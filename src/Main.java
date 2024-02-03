@@ -2,14 +2,16 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import model.TaskStatus;
-import service.Manager;
+import service.InMemoryTaskManager;
+import service.Managers;
+import service.TaskManager;
 
 public class Main {
 
     public static void main(String[] args) {
         // тестирование
-        Manager manager = new Manager();
-
+        TaskManager manager = Managers.getDefault();
+        System.out.println("создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:");
         // создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:
         Task task1 = manager.createTask(new Task("First Task", "Go to gym"));
         Task task2 = manager.createTask(new Task("Second Task", "Make kanban"));
@@ -21,11 +23,13 @@ public class Main {
         Subtask subtask3 = manager.createSubtask(new Subtask("Third Subtask", "Finish eleven classes",
                 epic2));
         System.out.println("_____");
+        System.out.println("печатаем списки эпиков, задач и подзадач");
         // печатаем списки эпиков, задач и подзадач:
-        manager.getTasksList();
-        manager.getEpicList();
-        manager.getSubtaskList();
+//        manager.getTasksList();
+//        manager.getEpicList();
+//        manager.getSubtaskList();
         System.out.println("_____");
+        System.out.println("меняем статусы созданных задач");
         // меняем статусы созданных объектов
         task1.setStatus(TaskStatus.IN_PROGRESS);
         task2.setStatus(TaskStatus.DONE);
@@ -33,17 +37,19 @@ public class Main {
         manager.updateTask(task2);
         System.out.println(manager.getTask(task1.getId()));
         System.out.println(manager.getTask(task2.getId()));
-
+        System.out.println("пытаемся вручную изменить статус у эпиков");
         // пытаемся вручную изменить статус у эпиков
         epic1.setStatus(TaskStatus.IN_PROGRESS);
         epic2.setStatus(TaskStatus.DONE);
         manager.updateEpic(epic1);
         manager.updateEpic(epic2);
         System.out.println("___");
+        System.out.println("проверяем что статусы не изменились");
         System.out.println(manager.getEpic(epic1.getId()));    // проверяем что статусы не изменились
         System.out.println(manager.getEpic(epic2.getId()));
         System.out.println("___");
         // меняем статусы у подзадач
+        System.out.println("меняем статусы у подзадач");
         subtask1.setStatus(TaskStatus.IN_PROGRESS);
         subtask2.setStatus(TaskStatus.DONE);
         subtask3.setStatus(TaskStatus.DONE);
@@ -53,22 +59,24 @@ public class Main {
         System.out.println(manager.getSubtask(subtask1.getId()));
         System.out.println(manager.getSubtask(subtask2.getId()));
         System.out.println(manager.getSubtask(subtask3.getId()));
+        System.out.println("прверяем что после этого статусы эпиков поменялись");
         manager.getEpicList();    // прверяем что после этого статусы эпиков поменялись
         System.out.println("__________");
+        System.out.println("удаляем эпик, задачу и одну подзадачу, смотрим что осталось ");
         // удаляем эпик, задачу и одну подзадачу
         manager.removeEpic(epic2.getId());
         manager.removeTask(task1.getId());
         manager.removeSubtask(subtask2.getId());
         // смотрим что осталось
-        manager.getTasksList();
-        manager.getEpicList();
-        manager.getSubtaskList();
+//        manager.getTasksList();
+//        manager.getEpicList();
+//        manager.getSubtaskList();
         System.out.println("____");
         // полностью удаляем подзадачи и смотрим что осталось
-
+        System.out.println("полностью удаляем подзадачи и смотрим что осталось");
         manager.clearSubtasks();
-        manager.getTasksList();
-        manager.getEpicList();
-        manager.getSubtaskList();
+//        manager.getTasksList();
+//        manager.getEpicList();
+//        manager.getSubtaskList();
     }
 }
