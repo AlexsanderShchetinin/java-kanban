@@ -12,7 +12,7 @@ class ManagersTest {
         HistoryManager defaultHistory = Managers.getDefaultHistory();
 
         assertNotNull(defaultHistory.getHistory(), "История менеджера пустая");
-        assertNotNull(aDefault.getHistoryManager(), "В менеждере задач история пустая ");
+        assertNotNull(aDefault.getHistory(), "В менеждере задач история пустая ");
         assertNotNull(aDefault.getTasksList(), "Список задач возвращает null ");
         assertNotNull(aDefault.getSubtaskList(), "Список подзадач возвращает null ");
         assertNotNull(aDefault.getEpicList(), "Список эпиков возвращает null ");

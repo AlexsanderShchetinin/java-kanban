@@ -21,14 +21,12 @@ public class Subtask extends Task {
 
     @Override
     public String toString() {
-        String result = "Subtask{" +
-                "name='" + name + '\'';
-        if(super.getDescription() != null){
-            result = result + ", description.length='" + description.length() + '\'';
-        }else{
-            result = result + ", description = null'" + '\'';
-        }
-        result = result + ", status=" + status + ", id=" + id + ", epic=" + epic.getName() +'}';
-        return result;
+        return "Subtask{" +
+                "name='" + name + '\''
+                + ", description='" + description + '\''
+                + ", status=" + status + '\''
+                + ", id=" + id + '}' + '\''
+                + ", epic=" + epic.getName() +'}';
+
     }
 }
