@@ -4,45 +4,71 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@DisplayName("Память менеджера истории")
 class InMemoryHistoryManagerTest {
     InMemoryHistoryManager historyManager;
     Task task;
     Subtask subtask;
     Epic epic;
+    InMemoryTaskManager taskManager;
 
 
     @BeforeEach
     void beforeEach(){
         historyManager = new InMemoryHistoryManager();
-        task = new Task("Задача", "Описание задачи");
-        epic = new Epic("Эпик", "описание эпика");
-        subtask = new Subtask("Подзадача", "описание подзадачи", epic);
+        taskManager = new InMemoryTaskManager(historyManager);
+        task =  taskManager.createTask(new Task("Задача", "Описание задачи"));
+        epic = taskManager.createEpic(new Epic("Эпик", "описание эпика"));
+        subtask = taskManager.createSubtask(new Subtask("Подзадача", "описание подзадачи", epic));
     }
 
     @Test
-    void add() {
+    @DisplayName("Должна добавлять задачи без повторов")
+    void shouldAddTasksWithoutRepeat() {
         assertNotNull(historyManager.getHistory(), "История не проинициализирована.");
-        final List<Task> history = historyManager.getHistory();
-        for (int i = 1; i < 8; i += 3) {
+        for (int i = 1; i < 5; i += 3) {
             historyManager.add(task);
-            assertEquals(i, history.size(), "Задача не добавляется в историю.");
             historyManager.add(subtask);
-            assertEquals(i+1, history.size(), "Подзадача не добавляется в историю.");
             historyManager.add(epic);
-            assertEquals(i+2, history.size(), "Эпик не добавляется в историю.");
         }
-
-        historyManager.add(task);
-        assertEquals(10, history.size(), "Задача не добавляется в историю.");
         historyManager.add(subtask);
-        assertEquals(subtask, history.get(0), "Первый объект истории не удаляется");
-        assertEquals(10, history.size(), "В менеджере истории больше 10 записей.");
+        assertEquals(3, historyManager.getHistory().size(),
+                "Повторные задачи из истории не удаляются");
+        historyManager.add(subtask);
+        assertEquals(3, historyManager.getHistory().size(),
+                "Повторные задачи из истории не удаляются");
+
+        InMemoryHistoryManager historyManager2 = new InMemoryHistoryManager();
+        historyManager2.add(task);
+        historyManager2.add(task);
+        historyManager2.add(task);
+        assertEquals(1, historyManager2.getHistory().size(),
+                "Повторные задачи из истории не удаляются (в истории одна запись)");
+    }
+
+    @Test
+    @DisplayName("Должен удалять задачи из истории")
+    void shouldRemoveTask(){
+            historyManager.add(task);
+            historyManager.add(subtask);
+            historyManager.add(epic);
+
+        historyManager.remove(subtask.getId());
+
+        assertEquals(2, historyManager.getHistory().size(),
+                "Из истории не удаляется запись");
+
+        historyManager.remove(1001);
+
+        assertEquals(2, historyManager.getHistory().size(),
+                "Удаление задачи из истории работает некорректно с ошибочным id");
+
 
     }
 

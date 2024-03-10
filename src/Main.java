@@ -6,10 +6,14 @@ import service.InMemoryTaskManager;
 import service.Managers;
 import service.TaskManager;
 
+import java.util.Arrays;
+
 public class Main {
 
     public static void main(String[] args) {
         // тестирование
+        int[] counter = new int[10];
+        System.out.println(Arrays.toString(counter));
         TaskManager manager = Managers.getDefault();
         System.out.println("создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:");
         // создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:

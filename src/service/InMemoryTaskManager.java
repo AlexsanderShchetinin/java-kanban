@@ -171,19 +171,14 @@ public class InMemoryTaskManager implements TaskManager {
         ArrayList<Subtask> listSubtaskByEpic = epicAttached.getSubtasks();
         listSubtaskByEpic.remove(subtasks.get(id));
         epicAttached.setSubtasks(listSubtaskByEpic);
-        epics.remove(epicAttached.getId());
         epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
         // удаляем подзадачу
         subtasks.remove(id);
     }
 
     @Override
-    public void getListSubtasksFromEpic(Epic epic) {
-        ArrayList<Subtask> attachedSubtasks = epics.get(epic.getId()).getSubtasks();
-        System.out.println("для " + epic + ":");
-        for (Subtask subtask : attachedSubtasks) {
-            System.out.println(subtask);
-        }
+    public List<Subtask> getListSubtasksFromEpic(Epic epic) {
+        return epics.get(epic.getId()).getSubtasks();
     }
 
     /* допущение при создании эпика - эпик создается с пустым списком подзадач.

@@ -1,12 +1,15 @@
 package service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DisplayName("Статический класс менеджеров")
 class ManagersTest {
 
     @Test
+    @DisplayName("Должен создавать не пустые объекты:")
     void checkInitialManagers(){
         TaskManager aDefault = Managers.getDefault();
         HistoryManager defaultHistory = Managers.getDefaultHistory();

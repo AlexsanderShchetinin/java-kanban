@@ -3,8 +3,8 @@ package service;
 import model.Epic;
 import model.Subtask;
 import model.Task;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+@DisplayName("Память менеджера задач")
 class InMemoryTaskManagerTest {
 
     private static InMemoryTaskManager taskManager;
@@ -23,7 +23,8 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldEpicCannotBeAddedToItself() {
+    @DisplayName("не должна добавлять в эпик список из своего же эпика")
+    void shouldNotEpicAddedToItself() {
         // Создаем эпик с пустым списком подзадач
         final Epic epic1 = taskManager.createEpic(new Epic("Эпик", "Описание эпика"));
         // Создаем отдельную подзадачу и меняем в ней id на id эпика
@@ -51,7 +52,8 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldSubtaskCannotBeAddedToItsEpic() {
+    @DisplayName("не должна прикреплять подзадачу к подзадаче в привязанный эпик")
+    void shouldNotSubtaskAddedToItsEpic() {
         // Создаем эпик и подзадачу в taskManager
         Subtask subtask = new Subtask("Подзадача", "Описание подзадачи",
                 taskManager.createEpic(new Epic("Эпик", "Описание Эпика")));
@@ -77,7 +79,8 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldCorrectCreateGetUpdateAndRemoveTasks() {
+    @DisplayName("должна корректно работать с задачами")
+    void shouldCreateGetUpdateAndRemoveTasks() {
         Task task = new Task("Test addNewTask", "Test addNewTask description");
         final Task returned = taskManager.createTask(task);
 
@@ -110,7 +113,8 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldCorrectCreateGetAndRemoveSubtaskEndEpic() {
+    @DisplayName("должна корректно работать с эпиками и подзадачами")
+    void shouldCreateGetAndRemoveSubtaskEndEpic() {
         Epic epic = new Epic("Epic", "Test epic description");
         Subtask subtask = new Subtask("Test addNewSubtask", "Test subtask description", epic);
         final Subtask returnedSubtask = taskManager.createSubtask(subtask);
@@ -156,6 +160,28 @@ class InMemoryTaskManagerTest {
         assertEquals(0, epics1.size(), "Неверное количество эпиков.");
     }
 
+    @Test
+    @DisplayName("должна корректно удалять подзадачи")
+    void shouldSubtaskRemove (){
+        final Epic epic = taskManager.createEpic(new Epic("Имя эпика", "Описание Эпика"));
+        for (int i = 1; i < 6; i++) {
+            taskManager.createSubtask(new Subtask("Подзадача " + i, "Описание "+ i, epic));
+        }
+        Subtask subtask1 = taskManager.getListSubtasksFromEpic(epic).get(0);
+
+        taskManager.removeSubtask(subtask1.getId());
+
+        assertEquals(4, epic.getSubtasks().size(), "Подзадача не удаляется.");
+        assertNotEquals("Подзадача 1", taskManager.getListSubtasksFromEpic(epic).get(0).getName(),
+                "Удаляется неправильная подзадача");
+        assertEquals("Подзадача 2", taskManager.getListSubtasksFromEpic(epic).get(0).getName(),
+                "Удаляется неправильная подзадача");
+
+        taskManager.clearSubtasks();
+
+        assertEquals(0, epic.getSubtasks().size(), "Все подзадачи не удаляются.");
+
+    }
 }
 
 
