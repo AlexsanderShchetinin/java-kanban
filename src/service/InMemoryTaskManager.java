@@ -32,7 +32,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public List<Task> getHistory() {
-        return  historyManager.getHistory();
+        return historyManager.getHistory();
     }
 
     @Override
@@ -76,7 +76,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Subtask createSubtask(Subtask subtask) {
         // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if(subtasks.containsKey(subtask.getEpic().getId())) return null;
+        if (subtasks.containsKey(subtask.getEpic().getId())) return null;
         subtask.setId(generateID());
         Epic epicBySubtask = subtask.getEpic();
         if (epicBySubtask.getSubtasks() != null) {
@@ -94,7 +94,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
         Epic updateEpic = checkEpicStatus(epicBySubtask);    // проверяем статус эпика
         // Проверяем был ли создан эпик в менеджере, если нет - то не добавляем
-        if(!(updateEpic.getId() == 0)){
+        if (!(updateEpic.getId() == 0)) {
             epics.remove(updateEpic.getId());
             epics.put(updateEpic.getId(), updateEpic);
         }
@@ -110,7 +110,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Subtask getSubtask(int id) {
         Subtask subtask = subtasks.get(id);
-        if(subtask == null){
+        if (subtask == null) {
             return null;
         }
         historyManager.add(subtask);
@@ -132,7 +132,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateSubtask(Subtask newSubtask) {
         // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if(subtasks.containsKey(newSubtask.getEpic().getId())) return;
+        if (subtasks.containsKey(newSubtask.getEpic().getId())) return;
         // если в новой подзадаче в эпике не добавлена подзадача - добавляем
         if (!(newSubtask.getEpic().getSubtasks().contains(newSubtask))) {
             ArrayList<Subtask> subtasksNewEpic = newSubtask.getEpic().getSubtasks();
@@ -171,19 +171,14 @@ public class InMemoryTaskManager implements TaskManager {
         ArrayList<Subtask> listSubtaskByEpic = epicAttached.getSubtasks();
         listSubtaskByEpic.remove(subtasks.get(id));
         epicAttached.setSubtasks(listSubtaskByEpic);
-        epics.remove(epicAttached.getId());
         epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
         // удаляем подзадачу
         subtasks.remove(id);
     }
 
     @Override
-    public void getListSubtasksFromEpic(Epic epic) {
-        ArrayList<Subtask> attachedSubtasks = epics.get(epic.getId()).getSubtasks();
-        System.out.println("для " + epic + ":");
-        for (Subtask subtask : attachedSubtasks) {
-            System.out.println(subtask);
-        }
+    public List<Subtask> getListSubtasksFromEpic(Epic epic) {
+        return epics.get(epic.getId()).getSubtasks();
     }
 
     /* допущение при создании эпика - эпик создается с пустым списком подзадач.
@@ -206,7 +201,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Epic getEpic(int id) {
         Epic epic = epics.get(id);
-        if(epic == null){
+        if (epic == null) {
             return null;
         }
         historyManager.add(epic);
@@ -235,7 +230,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void updateEpic(Epic newEpic) {
         // Проверка прикрепленых подзадач (id подзадач не должны содержать id эпиков)
         for (Subtask newSubtask : newEpic.getSubtasks()) {
-            if(epics.containsKey(newSubtask.getId())) return;
+            if (epics.containsKey(newSubtask.getId())) return;
         }
         Epic checkedEpic = checkEpicStatus(newEpic);    // проверяем корректность статуса эпика
         /* при обновлении эпика всегда список подзадач будет одинаковый в старом и новом эпике

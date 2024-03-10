@@ -2,7 +2,6 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import model.TaskStatus;
-import service.InMemoryTaskManager;
 import service.Managers;
 import service.TaskManager;
 
@@ -25,9 +24,6 @@ public class Main {
         System.out.println("_____");
         System.out.println("печатаем списки эпиков, задач и подзадач");
         // печатаем списки эпиков, задач и подзадач:
-//        manager.getTasksList();
-//        manager.getEpicList();
-//        manager.getSubtaskList();
         System.out.println("_____");
         System.out.println("меняем статусы созданных задач");
         // меняем статусы созданных объектов
