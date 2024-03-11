@@ -7,9 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("Память менеджера истории")
 class InMemoryHistoryManagerTest {
     InMemoryHistoryManager historyManager;
@@ -22,7 +21,7 @@ class InMemoryHistoryManagerTest {
     @BeforeEach
     void beforeEach(){
         historyManager = new InMemoryHistoryManager();
-        taskManager = new InMemoryTaskManager(historyManager);
+        taskManager = new InMemoryTaskManager();
         task =  taskManager.createTask(new Task("Задача", "Описание задачи"));
         epic = taskManager.createEpic(new Epic("Эпик", "описание эпика"));
         subtask = taskManager.createSubtask(new Subtask("Подзадача", "описание подзадачи", epic));
