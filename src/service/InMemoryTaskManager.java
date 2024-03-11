@@ -5,24 +5,37 @@ import model.Subtask;
 import model.Task;
 import model.TaskStatus;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InMemoryTaskManager that = (InMemoryTaskManager) o;
+        return Objects.equals(tasks, that.tasks) &&
+                Objects.equals(subtasks, that.subtasks) &&
+                Objects.equals(epics, that.epics) &&
+                Objects.equals(historyManager, that.historyManager);
+    }
 
-    private final HashMap<Integer, Task> tasks;
-    private final HashMap<Integer, Subtask> subtasks;
-    private final HashMap<Integer, Epic> epics;
-    private static int identifier;
-    private final HistoryManager historyManager;
+    @Override
+    public int hashCode() {
+        return Objects.hash(tasks, subtasks, epics, historyManager);
+    }
 
-    public InMemoryTaskManager(HistoryManager historyManager) {
+    protected final HashMap<Integer, Task> tasks;
+    protected final HashMap<Integer, Subtask> subtasks;
+    protected final HashMap<Integer, Epic> epics;
+    protected static int identifier;
+    protected final HistoryManager historyManager;
+
+    public InMemoryTaskManager() {
         this.tasks = new HashMap<>();
         this.subtasks = new HashMap<>();
         this.epics = new HashMap<>();
         identifier = 0;
-        this.historyManager = historyManager;
+        this.historyManager = Managers.getDefaultHistory();
     }
 
 
@@ -39,6 +52,7 @@ public class InMemoryTaskManager implements TaskManager {
     public Task createTask(Task task) {
         task.setId(generateID());
         tasks.put(task.getId(), task);
+        historyManager.add(task);
         return task;
     }
 
@@ -64,41 +78,25 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateTask(Task newTask) {
-        tasks.remove(newTask.getId());
         tasks.put(newTask.getId(), newTask);
     }
 
     @Override
     public void removeTask(int id) {
         tasks.remove(id);
+        historyManager.remove(id);
     }
 
     @Override
     public Subtask createSubtask(Subtask subtask) {
         // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if (subtasks.containsKey(subtask.getEpic().getId())) return null;
+        if (subtasks.containsKey(subtask.getEpicId())) return null;
         subtask.setId(generateID());
-        Epic epicBySubtask = subtask.getEpic();
-        if (epicBySubtask.getSubtasks() != null) {
-            if (!(epicBySubtask.getSubtasks().contains(subtask))) {
-                // если в эпике нет подзадачи - добавляем
-                ArrayList<Subtask> listSubtask = epicBySubtask.getSubtasks();
-                listSubtask.add(subtask);
-                epicBySubtask.setSubtasks(listSubtask);
-            }
-        } else {
-            // если нет ни одной подзадачи в эпике - тоже добавляем
-            ArrayList<Subtask> listSubtask = new ArrayList<>();
-            listSubtask.add(subtask);
-            epicBySubtask.setSubtasks(listSubtask);
-        }
-        Epic updateEpic = checkEpicStatus(epicBySubtask);    // проверяем статус эпика
-        // Проверяем был ли создан эпик в менеджере, если нет - то не добавляем
-        if (!(updateEpic.getId() == 0)) {
-            epics.remove(updateEpic.getId());
-            epics.put(updateEpic.getId(), updateEpic);
-        }
         subtasks.put(subtask.getId(), subtask);
+        // Обновляем эпик
+        Epic updatingEpic = epics.get(subtask.getEpicId());
+        updateEpic(updatingEpic);
+        historyManager.add(subtask);    // делаем запись в истории
         return subtask;
     }
 
@@ -132,53 +130,50 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void updateSubtask(Subtask newSubtask) {
         // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if (subtasks.containsKey(newSubtask.getEpic().getId())) return;
-        // если в новой подзадаче в эпике не добавлена подзадача - добавляем
-        if (!(newSubtask.getEpic().getSubtasks().contains(newSubtask))) {
-            ArrayList<Subtask> subtasksNewEpic = newSubtask.getEpic().getSubtasks();
-            subtasksNewEpic.add(newSubtask);
-            newSubtask.getEpic().setSubtasks(subtasksNewEpic);
-        }
+        if (subtasks.containsKey(newSubtask.getEpicId())) return;
         Subtask oldSubtask = subtasks.get(newSubtask.getId());
         // проверяем совпадают ли ключи эпиков в старой и новой подзадаче
-        if (oldSubtask.getEpic().getId() == newSubtask.getEpic().getId()) {
-            // если эпики не меняли - просто обновляем подзадачу и связанный эпик
-            subtasks.remove(newSubtask.getId());
-            subtasks.put(newSubtask.getId(), newSubtask);
-            Epic epic = checkEpicStatus(newSubtask.getEpic());    // обновляем статус эпика
-            epics.remove(epic.getId());
-            epics.put(epic.getId(), epic);
-        } else {    // иначе удаляем старую подзадачу в старом эпике
-            Epic oldEpic = epics.get(oldSubtask.getEpic().getId());
+        if (oldSubtask.getEpicId() != newSubtask.getEpicId()) {
+            // иначе удаляем старую подзадачу в старом эпике
+            Epic oldEpic = epics.get(oldSubtask.getEpicId());
             ArrayList<Subtask> subtasksOldEpic = oldEpic.getSubtasks();
             subtasksOldEpic.remove(oldSubtask);
             oldEpic.setSubtasks(subtasksOldEpic);
-            epics.remove(oldEpic.getId());
             epics.put(oldEpic.getId(), oldEpic);
-            // и повторяем логику обновления новой подзадачи
-            subtasks.remove(newSubtask.getId());
-            subtasks.put(newSubtask.getId(), newSubtask);
-            Epic epic = checkEpicStatus(newSubtask.getEpic());
-            epics.remove(epic.getId());
-            epics.put(epic.getId(), epic);
         }
+        // обновляем новую подзадачу
+        subtasks.put(newSubtask.getId(), newSubtask);
+        updateEpic(epics.get(newSubtask.getEpicId()));
     }
 
     @Override
     public void removeSubtask(int id) {
         // удаляем подзадачу из эпика и обновляем эпик
-        Epic epicAttached = subtasks.get(id).getEpic();
+        int epicId = subtasks.get(id).getEpicId();
+        Epic epicAttached = epics.get(epicId);
         ArrayList<Subtask> listSubtaskByEpic = epicAttached.getSubtasks();
         listSubtaskByEpic.remove(subtasks.get(id));
         epicAttached.setSubtasks(listSubtaskByEpic);
         epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
         // удаляем подзадачу
         subtasks.remove(id);
+        // удаляем из истории
+        historyManager.remove(id);
     }
 
     @Override
     public List<Subtask> getListSubtasksFromEpic(Epic epic) {
-        return epics.get(epic.getId()).getSubtasks();
+        if (!subtasks.isEmpty()) {
+            ArrayList<Subtask> subtasksFromEpic = new ArrayList<>();
+            for (Subtask value : subtasks.values()) {
+                if (value.getEpicId() == epic.getId()) {
+                    subtasksFromEpic.add(value);
+                }
+            }
+            return subtasksFromEpic;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     /* допущение при создании эпика - эпик создается с пустым списком подзадач.
@@ -190,6 +185,7 @@ public class InMemoryTaskManager implements TaskManager {
         epic.setId(generateID());
         Epic newEpic = checkEpicStatus(epic);    // проверяем статус эпика и возвращаем корректный
         epics.put(newEpic.getId(), newEpic);
+        historyManager.add(newEpic);    // добавляем историю
         return newEpic;
     }
 
@@ -224,6 +220,7 @@ public class InMemoryTaskManager implements TaskManager {
             subtasks.remove(subtask.getId());
         }
         epics.remove(id);    // удаляем эпик
+        historyManager.remove(id);    // удаляем из истории
     }
 
     @Override
@@ -233,19 +230,15 @@ public class InMemoryTaskManager implements TaskManager {
             if (epics.containsKey(newSubtask.getId())) return;
         }
         Epic checkedEpic = checkEpicStatus(newEpic);    // проверяем корректность статуса эпика
-        /* при обновлении эпика всегда список подзадач будет одинаковый в старом и новом эпике
-        так как при объявлении конструктора эпика нет возможности вручную изменять список подзадач.
-        Это специально сделано чтобы пользователь не смог скорректировать в эпике список подзадач.*/
-
-        // при обновлении эпика обновляем все подзадачи связанные с ним - меняем в них эпик.
-        ArrayList<Subtask> attachedSubtasks = epics.get(checkedEpic.getId()).getSubtasks();
-        for (Subtask subtask : attachedSubtasks) {
-            subtask.setEpic(checkedEpic);
-            subtasks.remove(subtask.getId());
-            subtasks.put(subtask.getId(), subtask);
+        // обновляем список подзадач внутри эпика
+        ArrayList<Subtask> newSubtasks = new ArrayList<>();
+        for (Subtask subtask : subtasks.values()) {
+            if (checkedEpic.getId() == subtask.getEpicId()) {
+                newSubtasks.add(subtask);
+            }
         }
+        checkedEpic.setSubtasks(newSubtasks);
         // после этого обновляем сам эпик
-        epics.remove(checkedEpic.getId());
         epics.put(checkedEpic.getId(), checkedEpic);
     }
 

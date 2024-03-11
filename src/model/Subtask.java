@@ -2,21 +2,20 @@ package model;
 
 public class Subtask extends Task {
 
-    private Epic epic;
-
-    public Subtask(String name, String description, Epic epic) {
+    public Subtask(String name, String description, int epicId) {
         super(name, description);
-        this.epic = epic;
+        this.epicId = epicId;
+        this.taskType = Type.SUBTASK;
     }
 
-
-    public Epic getEpic() {
-        return epic;
+    @Override
+    public Integer getEpicId() {
+        return epicId;
     }
 
-    public void setEpic(Epic epic) {
-        if (epic.getId() == this.id) return;    // id эпика и подзадачи должны различаться
-        this.epic = epic;
+    public void setEpicId(int epicId) {
+        if (epicId == this.id) return;    // id эпика и подзадачи должны различаться
+        this.epicId = epicId;
     }
 
     @Override
@@ -26,7 +25,7 @@ public class Subtask extends Task {
                 + ", description='" + description + '\''
                 + ", status=" + status + '\''
                 + ", id=" + id + '}' + '\''
-                + ", epic=" + epic.getName() + '}';
+                + ", epic=" + epicId + '}';
 
     }
 }

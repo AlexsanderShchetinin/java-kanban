@@ -19,7 +19,7 @@ class InMemoryTaskManagerTest {
 
     @BeforeEach
     void beforeEach() {
-        taskManager = new InMemoryTaskManager(new InMemoryHistoryManager());
+        taskManager = new InMemoryTaskManager();
     }
 
     @Test
@@ -28,8 +28,7 @@ class InMemoryTaskManagerTest {
         // Создаем эпик с пустым списком подзадач
         final Epic epic1 = taskManager.createEpic(new Epic("Эпик", "Описание эпика"));
         // Создаем отдельную подзадачу и меняем в ней id на id эпика
-        final Subtask errorSubtask = new Subtask("Подзадача", "с id равным id эпика",
-                taskManager.getEpic(epic1.getId()));
+        final Subtask errorSubtask = new Subtask("Подзадача", "с id равным id эпика", epic1.getId());
         errorSubtask.setId(epic1.getId());
         // и пробуем прикрепить ошибочную подзадачу к эпику
         ArrayList<Subtask> errorListSubtasks = new ArrayList<>();
@@ -55,18 +54,19 @@ class InMemoryTaskManagerTest {
     @DisplayName("не должна прикреплять подзадачу к подзадаче в привязанный эпик")
     void shouldNotSubtaskAddedToItsEpic() {
         // Создаем эпик и подзадачу в taskManager
+
         Subtask subtask = new Subtask("Подзадача", "Описание подзадачи",
-                taskManager.createEpic(new Epic("Эпик", "Описание Эпика")));
+                taskManager.createEpic(new Epic("Эпик", "Описание Эпика")).getId());
         Subtask returnedSubtask = taskManager.createSubtask(subtask);
         // Создаем новый эпик и устанавливаем в нем id равное id подзадачи
         Epic errorEpic = new Epic("Эпик", "Описание Эпика");
         errorEpic.setId(2);
         // меняем id связанного эпика на id подзадачи
-        returnedSubtask.getEpic().setId(2);
+        returnedSubtask.setId(2);
 
         // пытаемся создать подзадачу с привязанным эпиком у которго id равно id подзадачи
         Subtask subtask1 = taskManager.createSubtask(new Subtask("Подзадача2",
-                "Описание подзадачи 2", errorEpic));
+                "Описание подзадачи 2", errorEpic.getId()));
         // пытаемся обновить подзадачу taskManager в эпике которого привязан id == id подзадачи
         Subtask expectedSubtask = taskManager.getSubtask(2);    // подзадача до обновления
         taskManager.updateSubtask(returnedSubtask);
@@ -115,18 +115,18 @@ class InMemoryTaskManagerTest {
     @Test
     @DisplayName("должна корректно работать с эпиками и подзадачами")
     void shouldCreateGetAndRemoveSubtaskEndEpic() {
-        Epic epic = new Epic("Epic", "Test epic description");
-        Subtask subtask = new Subtask("Test addNewSubtask", "Test subtask description", epic);
-        final Subtask returnedSubtask = taskManager.createSubtask(subtask);
+        Epic epic = taskManager.createEpic(new Epic("Epic", "Test epic description"));
+        final Subtask returnedSubtask = taskManager.createSubtask(
+                new Subtask("Test addNewSubtask", "Test subtask description", epic.getId()));
         final Subtask savedSubtask = taskManager.getSubtask(returnedSubtask.getId());
 
         assertNotNull(savedSubtask, "Подзадача не найдена.");
-        assertEquals(subtask, savedSubtask, "Подзадачи не совпадают.");
+        assertEquals(returnedSubtask, savedSubtask, "Подзадачи не совпадают.");
 
         final List<Subtask> subtasks = taskManager.getSubtaskList();
         assertNotNull(subtasks, "Подзадачи не возвращаются.");
         assertEquals(1, subtasks.size(), "Неверное количество подзадач.");
-        assertEquals(subtask, subtasks.get(0), "Подзадачи не совпадают.");
+        assertEquals(returnedSubtask, subtasks.get(0), "Подзадачи не совпадают.");
 
         final Epic returnedEpic = taskManager.createEpic(epic);
         final Epic savedEpic = taskManager.getEpic(returnedEpic.getId());
@@ -136,7 +136,7 @@ class InMemoryTaskManagerTest {
 
         final List<Epic> epics = taskManager.getEpicList();
         assertNotNull(epics, "Эпики не возвращаются.");
-        assertEquals(1, epics.size(), "Неверное количество эпиков.");
+        assertEquals(2, epics.size(), "Неверное количество эпиков.");
         assertEquals(epic, epics.get(0), "Эпики не совпадают.");
 
         epic.setName("NewNameEpic");
@@ -144,12 +144,12 @@ class InMemoryTaskManagerTest {
         assertEquals("NewNameEpic", taskManager.getEpic(epic.getId()).getName(),
                 "При обновлении эпика имена не равны");
 
-        subtask.setName("NewNameSubtask");
-        taskManager.updateSubtask(subtask);
-        assertEquals("NewNameSubtask", taskManager.getSubtask(subtask.getId()).getName(),
+        returnedSubtask.setName("NewNameSubtask");
+        taskManager.updateSubtask(returnedSubtask);
+        assertEquals("NewNameSubtask", taskManager.getSubtask(returnedSubtask.getId()).getName(),
                 "При обновлении подзадачи имена не равны");
 
-        taskManager.removeSubtask(subtask.getId());
+        taskManager.removeSubtask(returnedSubtask.getId());
         final List<Subtask> subtasks1 = taskManager.getSubtaskList();
         assertNotNull(subtasks1, "Подзадачи не возвращаются.");
         assertEquals(0, subtasks1.size(), "Неверное количество подзадач.");
@@ -157,7 +157,7 @@ class InMemoryTaskManagerTest {
         taskManager.removeEpic(epic.getId());
         final List<Epic> epics1 = taskManager.getEpicList();
         assertNotNull(epics1, "Эпики не возвращаются.");
-        assertEquals(0, epics1.size(), "Неверное количество эпиков.");
+        assertEquals(1, epics1.size(), "Неверное количество эпиков.");
     }
 
     @Test
@@ -165,7 +165,7 @@ class InMemoryTaskManagerTest {
     void shouldSubtaskRemove() {
         final Epic epic = taskManager.createEpic(new Epic("Имя эпика", "Описание Эпика"));
         for (int i = 1; i < 6; i++) {
-            taskManager.createSubtask(new Subtask("Подзадача " + i, "Описание " + i, epic));
+            taskManager.createSubtask(new Subtask("Подзадача " + i, "Описание " + i, epic.getId()));
         }
         Subtask subtask1 = taskManager.getListSubtasksFromEpic(epic).get(0);
 
