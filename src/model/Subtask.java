@@ -15,7 +15,7 @@ public class Subtask extends Task {
     }
 
     public void setEpic(Epic epic) {
-        if(epic.getId() == this.id) return;    // id эпика и подзадачи должны различаться
+        if (epic.getId() == this.id) return;    // id эпика и подзадачи должны различаться
         this.epic = epic;
     }
 
@@ -26,7 +26,7 @@ public class Subtask extends Task {
                 + ", description='" + description + '\''
                 + ", status=" + status + '\''
                 + ", id=" + id + '}' + '\''
-                + ", epic=" + epic.getName() +'}';
+                + ", epic=" + epic.getName() + '}';
 
     }
 }

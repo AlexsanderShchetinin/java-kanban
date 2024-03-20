@@ -31,7 +31,7 @@ public interface TaskManager {
 
     void removeSubtask(int id);
 
-    void getListSubtasksFromEpic(Epic epic);
+    List<Subtask> getListSubtasksFromEpic(Epic epic);
 
     Epic createEpic(Epic epic);
 
@@ -45,6 +45,6 @@ public interface TaskManager {
 
     void updateEpic(Epic newEpic);
 
-     List<Task> getHistory();
+    List<Task> getHistory();
 
 }

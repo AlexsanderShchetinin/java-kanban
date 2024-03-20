@@ -17,7 +17,7 @@ public class Epic extends Task {
 
     public void setSubtasks(ArrayList<Subtask> subtasks) {
         for (Subtask subtask : subtasks) {
-            if(subtask.getId() == this.id) return;    // id эпика и подзадачи должны различаться
+            if (subtask.getId() == this.id) return;    // id эпика и подзадачи должны различаться
         }
         this.subtasks = subtasks;
     }
@@ -28,7 +28,7 @@ public class Epic extends Task {
                 "name='" + name + '\''
                 + ", description='" + description + '\''
                 + ", status=" + status + '\''
-                + ", id=" + id  + '\''
-                + ", subtasks.size=" + subtasks.size() +'}';
+                + ", id=" + id + '\''
+                + ", subtasks.size=" + subtasks.size() + '}';
     }
 }
