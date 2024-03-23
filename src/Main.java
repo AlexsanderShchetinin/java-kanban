@@ -13,7 +13,8 @@ public class Main {
     public static void main(String[] args) {
         // тестирование
         TaskManager manager = Managers.getDefault();
-        FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager();
+        FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(
+                new File("tasksAndHistoryFile.csv"));
         System.out.println("создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:");
         // создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:
         Task task1 = manager.createTask(new Task("First Task", "Go to gym"));
@@ -86,6 +87,6 @@ public class Main {
         File load = new File("tasksAndHistoryFile.csv");
         FileBackedTaskManager newFileBackedTaskManager = FileBackedTaskManager.loadFromFile(load);
         // Используем newFileBackedTaskManager и проверяем что файл перезаписвается без изменений
-        newFileBackedTaskManager.save();
+        newFileBackedTaskManager.updateEpic(epic3);    // вызываем save() через метод обновления
     }
 }

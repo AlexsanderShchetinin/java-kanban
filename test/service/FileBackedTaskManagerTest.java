@@ -24,23 +24,23 @@ class FileBackedTaskManagerTest {
 
     @BeforeEach
     void beforeEach() {
-        fileBackedTaskManager = new FileBackedTaskManager();
+        fileBackedTaskManager = new FileBackedTaskManager(file);
     }
 
     @Test
     @DisplayName("Должна загружать резервную копию менеджера задач из пустого файла")
     void shouldLoadTaskManagerFromEmptyFile() {
         FileBackedTaskManager emptyManager = FileBackedTaskManager.loadFromFile(emptyFile);
-        assertEquals(emptyManager, new FileBackedTaskManager(),
+        assertEquals(emptyManager, new FileBackedTaskManager(emptyFile),
                 "Загрузка из пустого файла отличается от пустого менеджера FileBackedTaskManager");
     }
 
     @Test
     @DisplayName("Должна сохранять пустую резервную копию менеджера задач в файл")
     void shouldSaveEmptyTaskManagerToFile() {
-        fileBackedTaskManager.save();
+        fileBackedTaskManager.clearTasks();
         FileBackedTaskManager emptyManager = FileBackedTaskManager.loadFromFile(file);
-        assertEquals(emptyManager, new FileBackedTaskManager(),
+        assertEquals(emptyManager, new FileBackedTaskManager(emptyFile),
                 "Сохранение и восстановление пустого менеджера FileBackedTaskManager не работает");
     }
 
@@ -75,7 +75,7 @@ class FileBackedTaskManagerTest {
         fileBackedTaskManager.removeSubtask(5);
 
         FileBackedTaskManager copy3 = FileBackedTaskManager.loadFromFile(file);
-        fileBackedTaskManager.save();
+        fileBackedTaskManager.updateEpic(epic1);
 
         assertEquals(copy3.historyManager, fileBackedTaskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager после удаления задач не работает");
