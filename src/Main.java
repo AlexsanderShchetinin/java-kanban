@@ -2,25 +2,30 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 import model.TaskStatus;
+import service.FileBackedTaskManager;
 import service.Managers;
 import service.TaskManager;
+
+import java.io.File;
 
 public class Main {
 
     public static void main(String[] args) {
         // тестирование
         TaskManager manager = Managers.getDefault();
+        FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(
+                new File("tasksAndHistoryFile.csv"));
         System.out.println("создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:");
         // создаем 2 задачи, эпик с двумя подзадачами и эпик с одной подзадачей:
         Task task1 = manager.createTask(new Task("First Task", "Go to gym"));
         Task task2 = manager.createTask(new Task("Second Task", "Make kanban"));
         Epic epic1 = manager.createEpic(new Epic("First Epic", "Learn to drive a car"));
         System.out.println(epic1);
-        Subtask subtask1 = manager.createSubtask(new Subtask("First Subtask", "Give a license", epic1));
-        Subtask subtask2 = manager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic1));
+        Subtask subtask1 = manager.createSubtask(new Subtask("First Subtask", "Give a license", epic1.getId()));
+        Subtask subtask2 = manager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic1.getId()));
         Epic epic2 = manager.createEpic(new Epic("Second Epic", "Finish school"));
         Subtask subtask3 = manager.createSubtask(new Subtask("Third Subtask", "Finish eleven classes",
-                epic2));
+                epic2.getId()));
         System.out.println("_____");
         System.out.println("печатаем списки эпиков, задач и подзадач");
         // печатаем списки эпиков, задач и подзадач:
@@ -63,16 +68,25 @@ public class Main {
         manager.removeEpic(epic2.getId());
         manager.removeTask(task1.getId());
         manager.removeSubtask(subtask2.getId());
-        // смотрим что осталось
-//        manager.getTasksList();
-//        manager.getEpicList();
-//        manager.getSubtaskList();
         System.out.println("____");
         // полностью удаляем подзадачи и смотрим что осталось
         System.out.println("полностью удаляем подзадачи и смотрим что осталось");
         manager.clearSubtasks();
-//        manager.getTasksList();
-//        manager.getEpicList();
-//        manager.getSubtaskList();
+
+        // тестирование FileBackedTaskManager
+        fileBackedTaskManager.createTask(new Task("First Task", "Go to gym"));
+        fileBackedTaskManager.createTask(new Task("Second Task", "Make kanban"));
+        Epic epic3 = fileBackedTaskManager.createEpic(new Epic("First Epic", "Learn to drive a car"));
+        fileBackedTaskManager.createSubtask(
+                new Subtask("First Subtask", "Give a license", epic3.getId()));
+        fileBackedTaskManager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic3.getId()));
+        Epic updateEpic = fileBackedTaskManager.getEpic(10);
+        updateEpic.setName("Update first Epic");
+        fileBackedTaskManager.updateEpic(updateEpic);
+        // Читаем записанный файл
+        File load = new File("tasksAndHistoryFile.csv");
+        FileBackedTaskManager newFileBackedTaskManager = FileBackedTaskManager.loadFromFile(load);
+        // Используем newFileBackedTaskManager и проверяем что файл перезаписвается без изменений
+        newFileBackedTaskManager.updateEpic(epic3);    // вызываем save() через метод обновления
     }
 }

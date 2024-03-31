@@ -1,17 +1,22 @@
 package model;
 
+import java.util.ArrayList;
+
 public class Task {
 
     protected String name;
     protected String description;
     protected TaskStatus status;
     protected int id;
-
+    protected int epicId;
+    protected ArrayList<Subtask> subtasks;
+    protected Type taskType;
 
     public Task(String name, String description) {
         this.name = name;
         this.description = description;
         this.status = TaskStatus.NEW;
+        this.taskType = Type.TASK;
     }
 
     public String getDescription() {
@@ -46,6 +51,14 @@ public class Task {
         this.name = name;
     }
 
+    public Integer getEpicId() {
+        return null;
+    }
+
+    public void setEpicId(int epicId) {
+        this.epicId = epicId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -67,4 +80,9 @@ public class Task {
                 + ", status=" + status + '\''
                 + ", id=" + id + '}';
     }
+
+    public Type getTaskType() {
+        return taskType;
+    }
+
 }

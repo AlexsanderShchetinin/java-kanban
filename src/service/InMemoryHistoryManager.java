@@ -2,14 +2,25 @@ package service;
 
 import model.Task;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
     private final Map<Integer, Node> linkedHistory;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InMemoryHistoryManager that = (InMemoryHistoryManager) o;
+        return Objects.equals(linkedHistory, that.linkedHistory) &&
+                Objects.equals(first, that.first) &&
+                Objects.equals(last, that.last);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(linkedHistory, first, last);
+    }
 
     public InMemoryHistoryManager() {
         linkedHistory = new HashMap<>();
@@ -25,6 +36,19 @@ public class InMemoryHistoryManager implements HistoryManager {
             this.item = item;
             this.next = next;
             this.prev = prev;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Node node = (Node) o;
+            return Objects.equals(item, node.item);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(item, next, prev);
         }
     }
 
