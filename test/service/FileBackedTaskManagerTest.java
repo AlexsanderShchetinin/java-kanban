@@ -13,18 +13,24 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DisplayName("Резервная копия менеджера задач")
-class FileBackedTaskManagerTest {
+class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
-    FileBackedTaskManager fileBackedTaskManager;
     File file = new File("tasksAndHistoryFile.csv");
     File emptyFile = File.createTempFile("Empty file", ".csv");
 
     FileBackedTaskManagerTest() throws IOException {
     }
 
+    @Override
+    @Test
+    @DisplayName("не должна создавать повторно эпики и задачи")
+    void shouldNotCreateRepeatedTasks() {
+        super.shouldNotCreateRepeatedTasks();
+    }
+
     @BeforeEach
     void beforeEach() {
-        fileBackedTaskManager = new FileBackedTaskManager(file);
+        taskManager = new FileBackedTaskManager(file);
     }
 
     @Test
@@ -38,7 +44,7 @@ class FileBackedTaskManagerTest {
     @Test
     @DisplayName("Должна сохранять пустую резервную копию менеджера задач в файл")
     void shouldSaveEmptyTaskManagerToFile() {
-        fileBackedTaskManager.clearTasks();
+        taskManager.clearTasks();
         FileBackedTaskManager emptyManager = FileBackedTaskManager.loadFromFile(file);
         assertEquals(emptyManager, new FileBackedTaskManager(emptyFile),
                 "Сохранение и восстановление пустого менеджера FileBackedTaskManager не работает");
@@ -48,37 +54,90 @@ class FileBackedTaskManagerTest {
     @DisplayName("Должна сохранять резервную копию менеджера задач в файл и загружать её из файла")
     void shouldSaveAndLoadTaskManagerToFile() {
         // сохранение будет происходить каждый раз при вызове методов create
-        fileBackedTaskManager.createTask(new Task("First Task", "Go to gym"));
-        fileBackedTaskManager.createTask(new Task("Second Task", "Make kanban"));
-        Epic epic1 = fileBackedTaskManager.createEpic(new Epic("First Epic", "Learn to drive a car"));
-        Epic epic2 = fileBackedTaskManager.createEpic(new Epic("Empty Epic", "Empty description"));
-        fileBackedTaskManager.createSubtask(
-                new Subtask("First Subtask", "Give a license", epic1.getId()));
-        fileBackedTaskManager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic1.getId()));
+        taskManager.createTask(new Task("First Task", "Go to gym",
+                "01.01.1970 00:01", 240));
+        taskManager.createTask(new Task("Second Task", "Make kanban",
+                "10.01.1970 10:01", 100000));
+        Epic epic1 = taskManager.createEpic(new Epic("First Epic", "Learn to drive a car"));
+        Epic epic2 = taskManager.createEpic(new Epic("Empty Epic", "Empty description"));
+        taskManager.createSubtask(
+                new Subtask("First Subtask", "Give a license", epic1.getId(),
+                        "01.01.2001 00:00", 8505));
+        taskManager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic1.getId(),
+                "01.01.2000 00:00", 8505));
 
         FileBackedTaskManager copy1 = FileBackedTaskManager.loadFromFile(file);
 
-        assertEquals(copy1.historyManager, fileBackedTaskManager.historyManager,
+        assertEquals(copy1.historyManager, taskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager после создания задач не работает");
 
-        fileBackedTaskManager.getTask(1);
-        fileBackedTaskManager.getSubtask(6);
-        fileBackedTaskManager.getEpic(3);
+        taskManager.getTask(1);
+        taskManager.getSubtask(6);
+        taskManager.getEpic(3);
 
         FileBackedTaskManager copy2 = FileBackedTaskManager.loadFromFile(file);
 
-        assertEquals(copy2.historyManager, fileBackedTaskManager.historyManager,
+        assertEquals(copy2.historyManager, taskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager при получении задач не работает");
 
-        fileBackedTaskManager.removeTask(2);
-        fileBackedTaskManager.removeEpic(4);
-        fileBackedTaskManager.removeSubtask(5);
+        taskManager.removeTask(2);
+        taskManager.removeEpic(4);
+        taskManager.removeSubtask(5);
 
         FileBackedTaskManager copy3 = FileBackedTaskManager.loadFromFile(file);
-        fileBackedTaskManager.updateEpic(epic1);
+        taskManager.updateEpic(epic1);
 
-        assertEquals(copy3.historyManager, fileBackedTaskManager.historyManager,
+        assertEquals(copy3.historyManager, taskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager после удаления задач не работает");
 
+    }
+
+    @Override
+    @Test
+    @DisplayName("не должна добавлять в эпик список из своего же эпика")
+    void shouldNotEpicAddedToItself() {
+        super.shouldNotEpicAddedToItself();
+    }
+
+    @Override
+    @Test
+    @DisplayName("не должна прикреплять подзадачу к подзадаче в привязанный эпик")
+    void shouldNotSubtaskAddedToItsEpic() {
+        super.shouldNotSubtaskAddedToItsEpic();
+    }
+
+    @Override
+    @Test
+    @DisplayName("должна корректно работать с задачами")
+    void shouldCreateGetUpdateAndRemoveTasks() {
+        super.shouldCreateGetUpdateAndRemoveTasks();
+    }
+
+    @Override
+    @Test
+    @DisplayName("должна корректно работать с эпиками и подзадачами")
+    void shouldCreateGetAndRemoveSubtaskEndEpic() {
+        super.shouldCreateGetAndRemoveSubtaskEndEpic();
+    }
+
+    @Override
+    @Test
+    @DisplayName("должна корректно удалять подзадачи")
+    void shouldSubtaskRemove() {
+        super.shouldSubtaskRemove();
+    }
+
+    @Override
+    @Test
+    @DisplayName("должна рассчитывать статусы у эпиков")
+    void shouldCalculateEpicStatus() {
+        super.shouldCalculateEpicStatus();
+    }
+
+    @Override
+    @Test
+    @DisplayName("Должна проверять пересечение интервалов приоритизированных задач")
+    void shouldCheckTaskTimeInterval() {
+        super.shouldCheckTaskTimeInterval();
     }
 }

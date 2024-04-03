@@ -22,10 +22,12 @@ class InMemoryHistoryManagerTest {
     void beforeEach(){
         historyManager = new InMemoryHistoryManager();
         taskManager = new InMemoryTaskManager();
-        task =  taskManager.createTask(new Task("Задача", "Описание задачи"));
+        task = taskManager.createTask(new Task("Задача", "Описание задачи",
+                "30.11.2020 10:10", 36000));
         epic = taskManager.createEpic(new Epic("Эпик", "описание эпика"));
         subtask = taskManager.createSubtask(
-                new Subtask("Подзадача", "описание подзадачи", epic.getId()));
+                new Subtask("Подзадача", "описание подзадачи", epic.getId(),
+                        "20.05.2010 15:11", 12345));
     }
 
     @Test
