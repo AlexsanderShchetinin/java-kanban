@@ -20,7 +20,6 @@ public class InMemoryTaskManager implements TaskManager {
     protected static int identifier;
     protected final HistoryManager historyManager;
     protected final TreeSet<Task> prioritizedTasks;
-    Comparator<Task> startTimeComparator;
 
     public InMemoryTaskManager() {
         this.tasks = new HashMap<>();
@@ -28,17 +27,14 @@ public class InMemoryTaskManager implements TaskManager {
         this.epics = new HashMap<>();
         identifier = 0;
         this.historyManager = Managers.getDefaultHistory();
-        this.startTimeComparator = new Comparator<Task>() {
-            @Override
-            public int compare(Task o1, Task o2) {
-                Optional<LocalDateTime> time1 = Optional.ofNullable(o1.getStartTime());
-                Optional<LocalDateTime> time2 = Optional.ofNullable(o2.getStartTime());
-                if (time1.isPresent() && time2.isPresent()) {
-                    if (time1.get().isAfter(time2.get())) return 1;
-                    else return -1;
-                }
-                return 0;
+        Comparator<Task> startTimeComparator = (o1, o2) -> {
+            Optional<LocalDateTime> time1 = Optional.ofNullable(o1.getStartTime());
+            Optional<LocalDateTime> time2 = Optional.ofNullable(o2.getStartTime());
+            if (time1.isPresent() && time2.isPresent()) {
+                if (time1.get().isAfter(time2.get())) return 1;
+                else return -1;
             }
+            return 0;
         };
         this.prioritizedTasks = new TreeSet<>(startTimeComparator);
     }
@@ -254,7 +250,9 @@ public class InMemoryTaskManager implements TaskManager {
     public void updateEpic(Epic newEpic) {
         // Проверка прикрепленых подзадач (id подзадач не должны содержать id эпиков)
         for (Subtask newSubtask : newEpic.getSubtasks()) {
-            if (epics.containsKey(newSubtask.getId())) return;
+            if (epics.containsKey(newSubtask.getId())) {
+                throw new ValidationException("Обновляемый эпик равен одной из существующих подзадач!");
+            }
         }
         Epic checkedEpic = checkEpicStatus(newEpic);    // проверяем корректность статуса эпика
         // обновляем список подзадач внутри эпика
@@ -265,6 +263,7 @@ public class InMemoryTaskManager implements TaskManager {
             }
         }
         checkedEpic.setSubtasks(newSubtasks);
+        checkedEpic.calculateTimesEpic();    // обновляем время выполнения эпика
         // после этого обновляем сам эпик
         epics.put(checkedEpic.getId(), checkedEpic);
     }

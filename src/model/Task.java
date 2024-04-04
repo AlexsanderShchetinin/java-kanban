@@ -3,6 +3,7 @@ package model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Task {
 
@@ -94,7 +95,7 @@ public class Task {
     }
 
     public LocalDateTime getEndTime() {
-        return startTime.plus(duration);
+        return Optional.of(startTime.plus(duration)).orElse(null);
     }
 
     @Override

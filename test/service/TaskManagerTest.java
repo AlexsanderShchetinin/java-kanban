@@ -2,10 +2,7 @@ package service;
 
 import exception.ManagerSaveException;
 import exception.ValidationException;
-import model.Epic;
-import model.Subtask;
-import model.Task;
-import model.TaskStatus;
+import model.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -215,8 +212,8 @@ abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
-    @DisplayName("должна рассчитывать статусы у эпиков")
-    void shouldCalculateEpicStatus() {
+    @DisplayName("должна рассчитывать статусы и время выполнения у эпиков")
+    void shouldCalculateEpicStatusAnd() {
         // предварительное создание эпиков и подзадач с временем начала (с приоритетом)
         // id эпиков - 1, 11, 21, 31, 41 и 51
         // id подзадач в промежутках
@@ -232,6 +229,15 @@ abstract class TaskManagerTest<T extends TaskManager> {
         for (int j = 1; j < 6; j++) {
             taskManager.createSubtask(new Subtask("CheckSubtask" + j, "CheckDescription" + j,
                     lastEpic.getId(), "09.01.2024 1" + j + ":01", 29));
+        }
+
+        // Расчет времени выполнения эпика (у первых 5 штук)
+        // Время всегда заканчивается в 19:59, а продолжительность = 19:59 - 11:01 = 480 + 58 = 538
+        for (int i = 1; i < 6; i++) {
+            String checkTime = taskManager.getEpic(10 * (i - 1) + 1).getEndTime().format(TimeFormat.TIME_FORMAT_1);
+            assertEquals("19:59", checkTime, "Ошибка в расчете endTime у эпика");
+            assertEquals(538, taskManager.getEpic(10 * (i - 1) + 1).getDurationToMinutes(),
+                    "Ошибка в расчете продолжительности выполнения эпика");
         }
 
         // расчет статуса Epic

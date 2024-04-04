@@ -59,9 +59,9 @@ class InMemoryTaskManagerTest extends TaskManagerTest<InMemoryTaskManager> {
 
     @Override
     @Test
-    @DisplayName("должна рассчитывать статусы у эпиков")
-    void shouldCalculateEpicStatus() {
-        super.shouldCalculateEpicStatus();
+    @DisplayName("должна рассчитывать статусы и время выполнения у эпиков")
+    void shouldCalculateEpicStatusAnd() {
+        super.shouldCalculateEpicStatusAnd();
     }
 
     @Override

@@ -1,5 +1,5 @@
 id,type,name,status,description,epic,startTime,duration
 2,SUBTASK,Подзадача,NEW,Описание подзадачи,1,10.03.2024 09:10,650
-1,EPIC,Эпик,NEW,Описание Эпика,null,Не определено,0
+1,EPIC,Эпик,NEW,Описание Эпика,null,10.03.2024 09:10,650
 
 HISTORY,2,1

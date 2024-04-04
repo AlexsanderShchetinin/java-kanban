@@ -28,8 +28,8 @@ public class Epic extends Task {
         this.subtasks = subtasks;
     }
 
-    private void calculateTimesEpic() {
-        final LocalDateTime[] endTime = new LocalDateTime[1];
+    public void calculateTimesEpic() {
+        LocalDateTime[] endTime = new LocalDateTime[1];
         Optional<LocalDateTime> minStartTime = subtasks.stream()
                 .map(subtask -> subtask.startTime)
                 .filter(Objects::nonNull)
@@ -37,17 +37,24 @@ public class Epic extends Task {
         Optional<LocalDateTime> maxEndTime = subtasks.stream()
                 .map(subtask -> subtask.startTime.plus(subtask.duration))
                 .max(Comparator.naturalOrder());
-        minStartTime.ifPresent(localDateTime -> startTime = localDateTime);
-
-        maxEndTime.ifPresent(localDateTime -> endTime[0] = localDateTime);
-        duration = Duration.between(startTime, endTime[0]);
+        startTime = minStartTime.orElse(null);
+        endTime[0] = maxEndTime.orElse(null);
+        if (startTime != null) {
+            duration = Duration.between(startTime, endTime[0]);
+        }
     }
 
     @Override
     public LocalDateTime getEndTime() {
         calculateTimesEpic();
-        return startTime.plus(duration);
+        return super.getEndTime();
     }
+
+    @Override
+    public long getDurationToMinutes() {
+        return super.getDurationToMinutes();
+    }
+
 
     @Override
     public String toString() {
