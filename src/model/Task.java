@@ -1,6 +1,9 @@
 package model;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Task {
 
@@ -11,12 +14,28 @@ public class Task {
     protected int epicId;
     protected ArrayList<Subtask> subtasks;
     protected Type taskType;
+    protected Duration duration;
+    protected LocalDateTime startTime;
 
-    public Task(String name, String description) {
+
+    public Task(String name, String description, String startTime, long duration) {
+        this.id = 0;
         this.name = name;
         this.description = description;
         this.status = TaskStatus.NEW;
         this.taskType = Type.TASK;
+        this.duration = Duration.ofMinutes(duration);
+        this.startTime = LocalDateTime.parse(startTime, TimeFormat.DATE_TIME_FORMAT_1);
+    }
+
+    public Task(String name, String description) {
+        this.id = 0;
+        this.name = name;
+        this.description = description;
+        this.status = TaskStatus.NEW;
+        this.taskType = Type.TASK;
+        this.duration = Duration.ZERO;
+        this.startTime = null;
     }
 
     public String getDescription() {
@@ -57,6 +76,26 @@ public class Task {
 
     public void setEpicId(int epicId) {
         this.epicId = epicId;
+    }
+
+    public long getDurationToMinutes() {
+        return duration.toMinutes();
+    }
+
+    public void setDurationOfMinutes(long duration) {
+        this.duration = Duration.ofMinutes(duration);
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return Optional.of(startTime.plus(duration)).orElse(null);
     }
 
     @Override

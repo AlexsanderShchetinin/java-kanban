@@ -7,6 +7,7 @@ import service.Managers;
 import service.TaskManager;
 
 import java.io.File;
+import java.time.LocalDateTime;
 
 public class Main {
 
@@ -74,7 +75,9 @@ public class Main {
         manager.clearSubtasks();
 
         // тестирование FileBackedTaskManager
-        fileBackedTaskManager.createTask(new Task("First Task", "Go to gym"));
+        LocalDateTime testTime = LocalDateTime.of(1999, 7, 27, 5, 30);
+        Task task = fileBackedTaskManager.createTask(new Task("First Task", "Be born",
+                "27.07.1999 05:30", 300));
         fileBackedTaskManager.createTask(new Task("Second Task", "Make kanban"));
         Epic epic3 = fileBackedTaskManager.createEpic(new Epic("First Epic", "Learn to drive a car"));
         fileBackedTaskManager.createSubtask(
@@ -82,7 +85,9 @@ public class Main {
         fileBackedTaskManager.createSubtask(new Subtask("Second Subtask", "Buy a car", epic3.getId()));
         Epic updateEpic = fileBackedTaskManager.getEpic(10);
         updateEpic.setName("Update first Epic");
+        task.setStatus(TaskStatus.DONE);
         fileBackedTaskManager.updateEpic(updateEpic);
+        fileBackedTaskManager.updateTask(task);
         // Читаем записанный файл
         File load = new File("tasksAndHistoryFile.csv");
         FileBackedTaskManager newFileBackedTaskManager = FileBackedTaskManager.loadFromFile(load);

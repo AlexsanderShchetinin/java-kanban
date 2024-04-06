@@ -99,7 +99,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 new FileWriter(backedFile, StandardCharsets.UTF_8))) {
             ArrayList<Task> history = (ArrayList<Task>) getHistory();
             // сохраняем задачи (подзадачи и эпики)
-            String headline = "id,type,name,status,description,epic";
+            String headline = "id,type,name,status,description,epic,startTime,duration";
             writer.write(headline);
             writer.newLine();
             for (Task task : history) {
