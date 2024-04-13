@@ -1,8 +1,12 @@
 package service;
 
+import converter.TimeAdapter;
 import exception.ManagerSaveException;
 import exception.ValidationException;
-import model.*;
+import model.Epic;
+import model.Subtask;
+import model.Task;
+import model.TaskStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -196,6 +200,10 @@ abstract class TaskManagerTest<T extends TaskManager> {
             taskManager.createSubtask(new Subtask("Подзадача " + i, "Описание " + i, epic2.getId(),
                     "03.04.2024 1" + i + ":00", 23));
         }
+        taskManager.createSubtask(new Subtask("Подзадача J", "Описание: без времени ", epic2.getId()));
+        taskManager.createTask(new Task("Task", "Task without time"));
+        taskManager.createTask(new Task("Task", "Task with time",
+                "03.04.2024 19:00", 45));
         Subtask subtask1 = taskManager.getListSubtasksFromEpic(epic.getId()).get(0);
 
         taskManager.removeSubtask(subtask1.getId());
@@ -234,7 +242,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
         // Расчет времени выполнения эпика (у первых 5 штук)
         // Время всегда заканчивается в 19:59, а продолжительность = 19:59 - 11:01 = 480 + 58 = 538
         for (int i = 1; i < 6; i++) {
-            String checkTime = taskManager.getEpic(10 * (i - 1) + 1).getEndTime().format(TimeFormat.TIME_FORMAT_1);
+            String checkTime = taskManager.getEpic(10 * (i - 1) + 1).getEndTime().format(TimeAdapter.TIME_FORMAT_1);
             assertEquals("19:59", checkTime, "Ошибка в расчете endTime у эпика");
             assertEquals(538, taskManager.getEpic(10 * (i - 1) + 1).getDurationToMinutes(),
                     "Ошибка в расчете продолжительности выполнения эпика");

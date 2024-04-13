@@ -89,7 +89,6 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
         assertEquals(copy3.historyManager, taskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager после удаления задач не работает");
-
     }
 
     @Override

@@ -1,5 +1,6 @@
 package service;
 
+import converter.CSVFormat;
 import model.Epic;
 import model.Subtask;
 import model.Task;
@@ -7,16 +8,16 @@ import model.Type;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileBackedTaskManager extends InMemoryTaskManager {
 
     private static File backedFile;
-    protected final Map<Integer, Task> tasksCollect;
+
 
     public FileBackedTaskManager(File file) {
         super();
-        tasksCollect = new HashMap<>();
         backedFile = file;
     }
 
@@ -25,7 +26,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     public static FileBackedTaskManager loadFromFile(File file) {
         try (BufferedReader reader = new BufferedReader(
                 new FileReader(file, StandardCharsets.UTF_8))) {
-            FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(backedFile);
+            FileBackedTaskManager fileBackedTaskManager = new FileBackedTaskManager(file);
             int maxId = 0;
             while (reader.ready()) {
                 String line = reader.readLine();
@@ -37,10 +38,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                             break;    // ничего не делаем
                         case "HISTORY":
                             // так как строка с историей идет последней при парсинге, то перед созданием истории
-                            // нужно добавить список с subtasks в каждый epic - используем метод обновления эпика.
-                            for (Epic epic : fileBackedTaskManager.epics.values()) {
-                                fileBackedTaskManager.updateEpic(epic);
-                            }
                             List<Integer> historyNumbers = CSVFormat.historyFromString(line);
                             for (Integer numId : historyNumbers) {
                                 try {
@@ -49,6 +46,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                                 } catch (NullPointerException e) {
                                     throw new RuntimeException("Считать историю по id: " + numId + " не удалось. ", e);
                                 }
+                            }
+                            // нужно добавить список с subtasks в каждый epic - используем метод обновления эпика.
+                            for (Epic epic : fileBackedTaskManager.epics.values()) {
+                                fileBackedTaskManager.updateEpic(epic);
                             }
                             break;
                         // список с задачами не относится ни к одному типу, поэтому его обработку пишем в default.
@@ -89,7 +90,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             identifier = maxId;
             return fileBackedTaskManager;
         } catch (IOException e) {
-            throw new RuntimeException("Ошибка чтения файла: " + backedFile.getName(), e);
+            throw new RuntimeException("Ошибка чтения файла: " + file.getName(), e);
         }
     }
 
@@ -210,16 +211,4 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         save();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FileBackedTaskManager that = (FileBackedTaskManager) o;
-        return Objects.equals(tasksCollect, that.tasksCollect);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(tasksCollect);
-    }
 }

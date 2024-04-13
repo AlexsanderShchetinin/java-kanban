@@ -28,18 +28,19 @@
     <orderEntry type="module-library" scope="TEST">
       <library name="JUnit5.8.1">
         <CLASSES>
-          <root url="jar://C:/Java/kanban_lib/junit-jupiter-5.8.1.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/junit-jupiter-api-5.8.1.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/opentest4j-1.2.0.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/junit-platform-commons-1.8.1.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/apiguardian-api-1.1.2.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/junit-jupiter-params-5.8.1.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/junit-jupiter-engine-5.8.1.jar!/" />
-          <root url="jar://C:/Java/kanban_lib/junit-platform-engine-1.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-jupiter-5.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-jupiter-api-5.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/opentest4j-1.2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-platform-commons-1.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/apiguardian-api-1.1.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-jupiter-params-5.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-jupiter-engine-5.8.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../kanban_lib/junit-platform-engine-1.8.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="google.code.gson" level="project" />
   </component>
 </module>

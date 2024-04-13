@@ -48,7 +48,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
         @Override
         public int hashCode() {
-            return Objects.hash(item, next, prev);
+            return Objects.hash(item);
         }
     }
 

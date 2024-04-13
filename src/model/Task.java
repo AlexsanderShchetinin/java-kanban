@@ -1,5 +1,7 @@
 package model;
 
+import converter.TimeAdapter;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class Task {
         this.status = TaskStatus.NEW;
         this.taskType = Type.TASK;
         this.duration = Duration.ofMinutes(duration);
-        this.startTime = LocalDateTime.parse(startTime, TimeFormat.DATE_TIME_FORMAT_1);
+        this.startTime = LocalDateTime.parse(startTime, TimeAdapter.DATE_TIME_FORMAT_1);
     }
 
     public Task(String name, String description) {

@@ -35,6 +35,7 @@ public class Epic extends Task {
                 .filter(Objects::nonNull)
                 .min(Comparator.naturalOrder());
         Optional<LocalDateTime> maxEndTime = subtasks.stream()
+                .filter(subtask -> subtask.startTime != null)
                 .map(subtask -> subtask.startTime.plus(subtask.duration))
                 .max(Comparator.naturalOrder());
         startTime = minStartTime.orElse(null);
