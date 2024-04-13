@@ -151,7 +151,7 @@ class HttpTaskServerTest {
         for (JsonElement element : jsonArray) {    // тест сопоставления каждого Json объекта задаче из памяти
             JsonObject taskJson = element.getAsJsonObject();
             int id = taskJson.get("id").getAsInt();
-            Task task = manager.getTask(id);
+            manager.getTask(id);
         }
     }
 
@@ -297,7 +297,7 @@ class HttpTaskServerTest {
         for (JsonElement element : jsonArray) {    // тест сопоставления каждого Json объекта подзадаче из памяти
             JsonObject taskJson = element.getAsJsonObject();
             int id = taskJson.get("id").getAsInt();
-            Task task = manager.getSubtask(id);
+            manager.getSubtask(id);
         }
     }
 
@@ -445,7 +445,7 @@ class HttpTaskServerTest {
         for (JsonElement element : jsonArray) {    // тест сопоставления каждого Json объекта подзадаче из памяти
             JsonObject taskJson = element.getAsJsonObject();
             int id = taskJson.get("id").getAsInt();
-            Task task = manager.getEpic(id);
+            manager.getEpic(id);
         }
     }
 
