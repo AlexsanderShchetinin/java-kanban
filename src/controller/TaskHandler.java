@@ -37,9 +37,9 @@ public class TaskHandler extends CommonHandler implements HttpHandler {
                 case POST:
                     try {
                         String body = getBodyRequest(httpExchange);
-                        int TaskId = getTaskIdInBodyRequest(body);
+                        int taskId = getTaskIdInBodyRequest(body);
                         Task task = getGson().fromJson(body, Task.class);
-                        if (TaskId == 0) {    // если в теле запроса не найден id, то это создание задачи
+                        if (taskId == 0) {    // если в теле запроса не найден id, то это создание задачи
                             manager.createTask(task);
                             sendEmptyResponse(httpExchange, 201);
                             break;

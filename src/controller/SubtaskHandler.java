@@ -36,9 +36,9 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
                 case POST:
                     try {
                         String body = getBodyRequest(exchange);
-                        int TaskId = getTaskIdInBodyRequest(body);
+                        int taskId = getTaskIdInBodyRequest(body);
                         Subtask subtask = getGson().fromJson(body, Subtask.class);
-                        if (TaskId == 0) {    // если в теле запроса не найден id, то это создание подзадачи
+                        if (taskId == 0) {    // если в теле запроса не найден id, то это создание подзадачи
                             manager.createSubtask(subtask);
                             sendEmptyResponse(exchange, 201);
                             break;
