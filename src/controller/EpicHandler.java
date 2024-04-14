@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
+import exception.ParsingException;
 import exception.ValidationException;
 import model.Epic;
 import model.Subtask;
@@ -37,10 +38,16 @@ public class EpicHandler extends CommonHandler implements HttpHandler {
                     break;
                 case POST:
                     try {
-                        Epic newEpic = getGson().fromJson(getBodyRequest(exchange), Epic.class);
+                        String body = getBodyRequest(exchange);
+                        checkBodyPOST_Request(body);    // проверка при парсинге тела запроса
+                        Epic newEpic = getGson().fromJson(body, Epic.class);
                         manager.createEpic(newEpic);
                         sendEmptyResponse(exchange, 201);
                     } catch (ValidationException e) {
+                        ErrorHandler.handle(exchange, e);
+                    } catch (ManagerSaveException e) {
+                        ErrorHandler.handle(exchange, e);
+                    } catch (ParsingException e) {
                         ErrorHandler.handle(exchange, e);
                     }
                     break;

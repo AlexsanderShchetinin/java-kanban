@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
+import exception.ParsingException;
 import exception.ValidationException;
 import model.Task;
 import service.TaskManager;
@@ -37,6 +38,7 @@ public class TaskHandler extends CommonHandler implements HttpHandler {
                 case POST:
                     try {
                         String body = getBodyRequest(httpExchange);
+                        checkBodyPOST_Request(body);    // проверка при парсинге тела запроса
                         int taskId = getTaskIdInBodyRequest(body);
                         Task task = getGson().fromJson(body, Task.class);
                         if (taskId == 0) {    // если в теле запроса не найден id, то это создание задачи
@@ -47,6 +49,10 @@ public class TaskHandler extends CommonHandler implements HttpHandler {
                         manager.updateTask(task);    // иначе обновляем задачу по найденному id
                         sendEmptyResponse(httpExchange, 200);
                     } catch (ValidationException e) {    // если пересекается время выполнения задач и т.п.
+                        ErrorHandler.handle(httpExchange, e);
+                    } catch (ManagerSaveException e) {
+                        ErrorHandler.handle(httpExchange, e);
+                    } catch (ParsingException e) {
                         ErrorHandler.handle(httpExchange, e);
                     }
                     break;

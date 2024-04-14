@@ -3,6 +3,7 @@ package controller;
 import com.sun.net.httpserver.HttpExchange;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
+import exception.ParsingException;
 import exception.ValidationException;
 
 import java.io.IOException;
@@ -27,6 +28,11 @@ public class ErrorHandler extends CommonHandler {
     }
 
     public static void handle(HttpExchange exchange, ManagerSaveException e) throws IOException {
+        e.printStackTrace();
+        sendGetResponse(exchange, getGson().toJson(e.getMessage()), 400);
+    }
+
+    public static void handle(HttpExchange exchange, ParsingException e) throws IOException {
         e.printStackTrace();
         sendGetResponse(exchange, getGson().toJson(e.getMessage()), 400);
     }

@@ -1,11 +1,13 @@
 package controller;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;
 import converter.DurationAdapter;
 import converter.TimeAdapter;
+import exception.ParsingException;
 import model.Task;
+import model.TaskStatus;
+import model.Type;
 import service.TaskManager;
 
 import java.io.IOException;
@@ -68,7 +70,52 @@ public abstract class CommonHandler {
 
     // получение тела запроса в формате строки
     protected final String getBodyRequest(HttpExchange exchange) throws IOException {
-        return new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        if (body.isEmpty() || body.isBlank()) {
+            throw new ParsingException("В POST запросе отсутствует тело запроса!");
+        }
+        return body;
+    }
+
+    protected void checkBodyPOST_Request(String jsonBody) throws IOException {
+        JsonElement jsonElement = JsonParser.parseString(jsonBody);
+        if (!jsonElement.isJsonObject()) {
+            throw new ParsingException("В тело запроса передан не JSON объект!");
+        }
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        try {
+            if (jsonObject.get("id").isJsonNull()) {
+                throw new ParsingException("при POST запросе поле id должно быть заполнено как null");
+            }
+            jsonObject.get("duration").getAsInt();
+            jsonObject.get("startTime").getAsString();
+            String taskType = jsonObject.get("taskType").getAsString().toUpperCase();
+            String status = jsonObject.get("status").getAsString().toUpperCase();
+            try {
+                Type.valueOf(taskType);
+            } catch (IllegalArgumentException exception) {
+                throw new ParsingException("в теле запроса передан неверный тип задачи в поле taskType: " + taskType);
+            }
+            try {
+                TaskStatus.valueOf(status);
+            } catch (IllegalArgumentException exception) {
+                throw new ParsingException("в теле запроса передан неверный статус задачи в поле status: " + status);
+            }
+            if ((taskType.equals("EPIC") || taskType.equals("TASK")) && (!jsonObject.get("epicId").isJsonNull())) {
+                if (jsonObject.get("epicId").getAsInt() != 0) {
+                    throw new ParsingException("в теле запроса передан epicId. " +
+                            "У задач и эпиков этот параметр должен быть пустой!");
+                }
+            }
+            if (taskType.equals("SUBTASK") && jsonObject.get("epicId").isJsonNull()) {
+                throw new ParsingException("У подзадач поле epicId не может быть пустым!");
+            }
+            if ((taskType.equals("SUBTASK") || taskType.equals("TASK")) && (!jsonObject.get("subtasks").isJsonNull())) {
+                throw new ParsingException("У задач и подзадач поле subtasks должно быть пустым");
+            }
+        } catch (NullPointerException exception) {
+            throw new ParsingException("в теле запроса как минимум одно поле имеет неверное название!");
+        }
     }
 
     // определение эндпоинтов

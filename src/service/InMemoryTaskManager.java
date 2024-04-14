@@ -61,8 +61,8 @@ public class InMemoryTaskManager implements TaskManager {
         }
         task.setId(generateID());
         addTaskByPriority(task);    // добавляем в приоритетные задачи
-        tasks.put(task.getId(), task);
-        historyManager.add(task);
+        tasks.put(task.getId(), task);    // вносим задачу в память менеджера
+        historyManager.add(task);    // добавляем в историю
         return task;
     }
 
@@ -118,12 +118,14 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtasks.containsKey(subtask.getId())) {
             throw new ValidationException("Подзадача c id=" + subtask.getId() + " уже создана!");
         }
-        // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if (subtasks.containsKey(subtask.getEpicId())) {
-            throw new ManagerSaveException("Подзадача связана с некорректным эпиком");
+        // Проверка прикрепленного эпика
+        if (subtasks.containsKey(subtask.getEpicId()) || !epics.containsKey(subtask.getEpicId())) {
+            throw new ManagerSaveException("В подзадаче неверно указан epicId=" + subtask.getEpicId() +
+                    " проверьте введенные данные");
         }
         subtask.setId(generateID());
-        addTaskByPriority(subtask);    // // добавляем в множество подзадачу
+        addTaskByPriority(subtask);    // добавляем в множество подзадачу
+        // добавляем задачу в память
         subtasks.put(subtask.getId(), subtask);
         // Обновляем эпик
         Epic updatingEpic = epics.get(subtask.getEpicId());
@@ -346,7 +348,10 @@ public class InMemoryTaskManager implements TaskManager {
                     .filter(checkedTask -> checkedTask.getId() != task.getId())    // исключаем одинаковые задачи
                     .collect(Collectors.toList());
             if (emptyList.isEmpty()) prioritizedTasks.add(task);
-            else throw new ValidationException("Имеется пересечение по времени выполнения с другими задачами!");
+            else {
+                identifier--;    // если создание задачи отменяется, то возвращать идентификатор в прежнее состояние
+                throw new ValidationException("Имеется пересечение по времени выполнения с другими задачами!");
+            }
         }
     }
 

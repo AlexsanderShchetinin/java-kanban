@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
+import exception.ParsingException;
 import exception.ValidationException;
 import model.Subtask;
 import service.TaskManager;
@@ -36,6 +37,7 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
                 case POST:
                     try {
                         String body = getBodyRequest(exchange);
+                        checkBodyPOST_Request(body);  // проверка при парсинге тела запроса ParsingException
                         int taskId = getTaskIdInBodyRequest(body);
                         Subtask subtask = getGson().fromJson(body, Subtask.class);
                         if (taskId == 0) {    // если в теле запроса не найден id, то это создание подзадачи
@@ -45,7 +47,12 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
                         }
                         manager.updateSubtask(subtask);    // иначе обновляем подзадачу по найденному id
                         sendEmptyResponse(exchange, 200);
-                    } catch (ValidationException e) {    // если пересекается время выполнения задач и т.п.
+                    } catch (ValidationException e) {
+                        // если пересекается время выполнения задач и т.п.
+                        ErrorHandler.handle(exchange, e);
+                    } catch (ManagerSaveException e) {
+                        ErrorHandler.handle(exchange, e);
+                    } catch (ParsingException e) {
                         ErrorHandler.handle(exchange, e);
                     }
                     break;

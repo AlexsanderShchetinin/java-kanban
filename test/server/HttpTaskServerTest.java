@@ -301,6 +301,67 @@ class HttpTaskServerTest {
         }
     }
 
+
+    @Test
+    @DisplayName("Проверка исключений при построении некорректного POST запроса")
+    void shouldCheckParsingException() throws IOException, InterruptedException {
+        client = HttpClient.newHttpClient();
+        Subtask newSubtask = new Subtask("Подзадача с временем_1",
+                "shouldCheckParsingException", 0, "01.01.2000 10:00", 1441);
+        Task newTask = new Task("Задача с временем_1",
+                "shouldCheckParsingException", "01.01.2001 10:00", 1441);
+        String taskString = getGson().toJson(newTask);
+        String taskErrorJsonString = taskString.replace("taskType", "error");
+        String taskErrorValueString = taskString.replace("NEW", "errorVal");
+        newTask.setEpicId(1);
+        Epic newEpic = new Epic("Эпик 1", "shouldCheckParsingException");
+        String epicString = getGson().toJson(newEpic);
+        String epicErrorJsonString = epicString.replace("id", "error");
+        String epicErrorValueJsonString = epicString.replace("EPIC", "error");
+        newEpic.setEpicId(2);
+
+        String emptyString = "";
+        String subtaskWithErrorEpicString = getGson().toJson(newSubtask);
+        String taskWithEpicString = getGson().toJson(newTask);
+        String epicWithEpicString = getGson().toJson(newEpic);
+
+        HttpRequest taskRequestEmpty = buildPOST_Request(createURI("/tasks"), emptyString);
+        HttpRequest subtaskRequestEmpty = buildPOST_Request(createURI("/subtasks"), emptyString);
+        HttpRequest epicRequestEmpty = buildPOST_Request(createURI("/epics"), emptyString);
+        HttpRequest taskRequestError = buildPOST_Request(createURI("/tasks"), taskWithEpicString);
+        HttpRequest taskRequestError2 = buildPOST_Request(createURI("/tasks"), taskErrorJsonString);
+        HttpRequest taskRequestError3 = buildPOST_Request(createURI("/tasks"), taskErrorValueString);
+        HttpRequest subtaskRequestError = buildPOST_Request(createURI("/subtasks"), subtaskWithErrorEpicString);
+        HttpRequest epicRequestError = buildPOST_Request(createURI("/epics"), epicWithEpicString);
+        HttpRequest epicRequestError2 = buildPOST_Request(createURI("/epics"), epicErrorJsonString);
+        HttpRequest epicRequestError3 = buildPOST_Request(createURI("/epics"), epicErrorValueJsonString);
+
+
+        HttpResponse<String> response1 = client.send(taskRequestEmpty, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response2 = client.send(subtaskRequestEmpty, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response3 = client.send(epicRequestEmpty, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response4 = client.send(taskRequestError, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response5 = client.send(taskRequestError2, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response6 = client.send(taskRequestError3, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response7 = client.send(subtaskRequestError, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response8 = client.send(epicRequestError, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response9 = client.send(epicRequestError2, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response10 = client.send(epicRequestError3, HttpResponse.BodyHandlers.ofString());
+
+        // тест статуса ответа при неправильном теле запроса
+        assertEquals(400, response1.statusCode(), "статус ответа != 400");
+        assertEquals(400, response2.statusCode(), "статус ответа != 400");
+        assertEquals(400, response3.statusCode(), "статус ответа != 400");
+        assertEquals(400, response4.statusCode(), "статус ответа != 400");
+        assertEquals(400, response5.statusCode(), "статус ответа != 400");
+        assertEquals(400, response6.statusCode(), "статус ответа != 400");
+        assertEquals(400, response7.statusCode(), "статус ответа != 400");
+        assertEquals(400, response8.statusCode(), "статус ответа != 400");
+        assertEquals(400, response9.statusCode(), "статус ответа != 400");
+        assertEquals(400, response10.statusCode(), "статус ответа != 400");
+
+    }
+
     @Test
     @DisplayName("Должен отдавать в ответ подзадачу по id URI")
     void ShouldResponseGET_SubtaskById() throws IOException, InterruptedException {
@@ -340,19 +401,19 @@ class HttpTaskServerTest {
         String jsonString2 = getGson().toJson(newTaskWithTime);
         String jsonString3 = getGson().toJson(newTaskWithTime2);
 
-        HttpRequest TaskRequest1 = buildPOST_Request(createURI("/subtasks"), jsonString1);
-        HttpResponse<String> response1 = client.send(TaskRequest1, HttpResponse.BodyHandlers.ofString());
+        HttpRequest taskRequest1 = buildPOST_Request(createURI("/subtasks"), jsonString1);
+        HttpResponse<String> response1 = client.send(taskRequest1, HttpResponse.BodyHandlers.ofString());
         // тест статуса ответа при добавлении неприоритизированной задачи
         assertEquals(201, response1.statusCode(), "статус ответа != 201");
 
-        HttpRequest TaskRequest2 = buildPOST_Request(createURI("/subtasks"), jsonString2);
-        HttpResponse<String> response2 = client.send(TaskRequest2, HttpResponse.BodyHandlers.ofString());
+        HttpRequest taskRequest2 = buildPOST_Request(createURI("/subtasks"), jsonString2);
+        HttpResponse<String> response2 = client.send(taskRequest2, HttpResponse.BodyHandlers.ofString());
         // тест статуса ответа при добавлении приоритетной задачи,
         // когда оне не пересекается по времени с другими задачами
         assertEquals(201, response2.statusCode(), "статус ответа != 201");
 
-        HttpRequest TaskRequest3 = buildPOST_Request(createURI("/subtasks"), jsonString3);
-        HttpResponse<String> response3 = client.send(TaskRequest3, HttpResponse.BodyHandlers.ofString());
+        HttpRequest taskRequest3 = buildPOST_Request(createURI("/subtasks"), jsonString3);
+        HttpResponse<String> response3 = client.send(taskRequest3, HttpResponse.BodyHandlers.ofString());
         // тест статуса ответа при добавлении приоритетной задачи,
         // когда оне пересекается по времени с другими задачами
         assertEquals(406, response3.statusCode(), "статус ответа != 406");

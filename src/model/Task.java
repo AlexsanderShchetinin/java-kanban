@@ -13,7 +13,7 @@ public class Task {
     protected String description;
     protected TaskStatus status;
     protected int id;
-    protected int epicId;
+    protected Integer epicId;
     protected ArrayList<Subtask> subtasks;
     protected Type taskType;
     protected Duration duration;
@@ -73,7 +73,10 @@ public class Task {
     }
 
     public Integer getEpicId() {
-        return null;
+        if (epicId == null) {
+            return null;
+        }
+        return epicId;
     }
 
     public void setEpicId(int epicId) {

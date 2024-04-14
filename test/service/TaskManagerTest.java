@@ -78,7 +78,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
             // Проверяем что обновление не проходит
             assertEquals(subtaskAfterUpdate, expectedSubtask, "Подзадача обновлена с некорректным эпиком");
         } catch (ManagerSaveException e) {
-            assertEquals("Подзадача связана с некорректным эпиком", e.getMessage(),
+            assertEquals("В подзадаче неверно указан epicId=2 проверьте введенные данные", e.getMessage(),
                     "Не удалось отловить исключение при смене id подзадачи");
         }
     }
@@ -220,6 +220,53 @@ abstract class TaskManagerTest<T extends TaskManager> {
     }
 
     @Test
+    @DisplayName("Должна проверять пересечение интервалов задач с приоритетом")
+    void shouldCheckTaskTimeInterval() {
+        // Создание задач с временем начала (с приоритетом) и без приоритета
+        // id задач с 1 по 10
+        // нечетные - приоритезированные, четные - без начального времени
+        // при создании приоритетных задач уже проверяется что интервалы не пересекаются
+        for (int i = 1; i < 11; i += 2) {
+            taskManager.createTask(new Task("Task_" + i, "Descript_" + i,
+                    (i + 10) + ".01.2024 " + (i + 10) + ":01", 35));
+            taskManager.createTask(new Task("Task_" + (i + 1), "Descript_" + (i + 1)));
+        }
+
+        // Добавим новые интервалы в задачи без начального времени
+        // таким образом чтобы они приводили к исключениям по всем граничным и промежуточным условиям
+        // 1. Время начала одной задачи равно времени начала другой
+        LocalDateTime dateTime1 = LocalDateTime.of(2024, 1, 11, 11, 1);
+        taskManager.getTask(2).setStartTime(dateTime1);
+        assertThrows(ValidationException.class, () -> {
+            taskManager.updateTask(taskManager.getTask(2));
+        }, "Расчет пересечения интервалов не сработал при одинаковом времени начала задач");
+
+        // 2. Время окончания у двух задач одинаковое
+        LocalDateTime dateTime2 = LocalDateTime.of(2024, 1, 13, 13, 0);
+        taskManager.getTask(4).setStartTime(dateTime2);
+        taskManager.getTask(4).setDurationOfMinutes(36);
+        assertThrows(ValidationException.class, () -> {
+            taskManager.updateTask(taskManager.getTask(4));
+        }, "Расчет пересечения интервалов не сработал при одинаковом времени окончания задач");
+
+        // 3. Интервал одной задачи полностью лежит внутри интервала другой задачи
+        LocalDateTime dateTime3 = LocalDateTime.of(2024, 1, 15, 14, 0);
+        taskManager.getTask(6).setStartTime(dateTime3);
+        taskManager.getTask(6).setDurationOfMinutes(360);
+        assertThrows(ValidationException.class, () -> {
+            taskManager.updateTask(taskManager.getTask(6));
+        }, "Расчет пересечения интервалов не сработал при полном пересечении интервалов");
+
+        // 3. Интервал одной задачи частично перекрывает интервала другой задачи
+        LocalDateTime dateTime4 = LocalDateTime.of(2024, 1, 17, 17, 10);
+        taskManager.getTask(8).setStartTime(dateTime4);
+        taskManager.getTask(8).setDurationOfMinutes(360);
+        assertThrows(ValidationException.class, () -> {
+            taskManager.updateTask(taskManager.getTask(8));
+        }, "Расчет пересечения интервалов не сработал при частичном пересечении интервалов");
+    }
+
+    @Test
     @DisplayName("должна рассчитывать статусы и время выполнения у эпиков")
     void shouldCalculateEpicStatusAnd() {
         // предварительное создание эпиков и подзадач с временем начала (с приоритетом)
@@ -273,53 +320,6 @@ abstract class TaskManagerTest<T extends TaskManager> {
         Epic calculateEpic4 = taskManager.checkEpicStatus(taskManager.getEpic(21));
         assertEquals(TaskStatus.IN_PROGRESS, calculateEpic4.getStatus(),
                 "ошибка при втором расчете статуса Эпика IN_PROGRESS.");
-    }
-
-    @Test
-    @DisplayName("Должна проверять пересечение интервалов задач с приоритетом")
-    void shouldCheckTaskTimeInterval() {
-        // Создание задач с временем начала (с приоритетом) и без приоритета
-        // id задач с 1 по 10
-        // нечетные - приоритезированные, четные - без начального времени
-        // при создании приоритетных задач уже проверяется что интервалы не пересекаются
-        for (int i = 1; i < 11; i += 2) {
-            taskManager.createTask(new Task("Task_" + i, "Descript_" + i,
-                    (i + 10) + ".01.2024 " + (i + 10) + ":01", 35));
-            taskManager.createTask(new Task("Task_" + (i + 1), "Descript_" + (i + 1)));
-        }
-
-        // Добавим новые интервалы в задачи без начального времени
-        // таким образом чтобы они приводили к исключениям по всем граничным и промежуточным условиям
-        // 1. Время начала одной задачи равно времени начала другой
-        LocalDateTime dateTime1 = LocalDateTime.of(2024, 1, 11, 11, 1);
-        taskManager.getTask(2).setStartTime(dateTime1);
-        assertThrows(ValidationException.class, () -> {
-            taskManager.updateTask(taskManager.getTask(2));
-        }, "Расчет пересечения интервалов не сработал при одинаковом времени начала задач");
-
-        // 2. Время окончания у двух задач одинаковое
-        LocalDateTime dateTime2 = LocalDateTime.of(2024, 1, 13, 13, 0);
-        taskManager.getTask(4).setStartTime(dateTime2);
-        taskManager.getTask(4).setDurationOfMinutes(36);
-        assertThrows(ValidationException.class, () -> {
-            taskManager.updateTask(taskManager.getTask(4));
-        }, "Расчет пересечения интервалов не сработал при одинаковом времени окончания задач");
-
-        // 3. Интервал одной задачи полностью лежит внутри интервала другой задачи
-        LocalDateTime dateTime3 = LocalDateTime.of(2024, 1, 15, 14, 0);
-        taskManager.getTask(6).setStartTime(dateTime3);
-        taskManager.getTask(6).setDurationOfMinutes(360);
-        assertThrows(ValidationException.class, () -> {
-            taskManager.updateTask(taskManager.getTask(6));
-        }, "Расчет пересечения интервалов не сработал при полном пересечении интервалов");
-
-        // 3. Интервал одной задачи частично перекрывает интервала другой задачи
-        LocalDateTime dateTime4 = LocalDateTime.of(2024, 1, 17, 17, 10);
-        taskManager.getTask(8).setStartTime(dateTime4);
-        taskManager.getTask(8).setDurationOfMinutes(360);
-        assertThrows(ValidationException.class, () -> {
-            taskManager.updateTask(taskManager.getTask(8));
-        }, "Расчет пересечения интервалов не сработал при частичном пересечении интервалов");
     }
 
 }
