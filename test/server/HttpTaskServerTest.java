@@ -321,7 +321,6 @@ class HttpTaskServerTest {
         String epicErrorJsonString = epicString.replace("id", "error");
 
         String emptyString = "";
-        String taskWithEpicString = getGson().toJson(newTask);
 
         HttpRequest taskRequestEmpty = buildPOST_Request(createURI("/tasks"), emptyString);
         HttpRequest subtaskRequestEmpty = buildPOST_Request(createURI("/subtasks"), emptyString);
