@@ -1,5 +1,6 @@
 package controller;
 
+import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import exception.ManagerSaveException;
@@ -8,6 +9,8 @@ import exception.ParsingException;
 import exception.ValidationException;
 import model.Epic;
 import model.Subtask;
+import model.TaskStatus;
+import model.Type;
 import service.TaskManager;
 
 import java.io.IOException;
@@ -41,6 +44,12 @@ public class EpicHandler extends CommonHandler implements HttpHandler {
                         String body = getBodyRequest(exchange);
                         checkBodyPOST_Request(body);    // проверка при парсинге тела запроса
                         Epic newEpic = getGson().fromJson(body, Epic.class);
+                        newEpic.setTaskType(Type.EPIC);
+                        newEpic.setEpicId(0);
+                        newEpic.setEmptySubtasks();
+                        if (newEpic.getStatus() == null) {
+                            newEpic.setStatus(TaskStatus.NEW);
+                        }
                         manager.createEpic(newEpic);
                         sendEmptyResponse(exchange, 201);
                     } catch (ValidationException e) {
@@ -48,6 +57,8 @@ public class EpicHandler extends CommonHandler implements HttpHandler {
                     } catch (ManagerSaveException e) {
                         ErrorHandler.handle(exchange, e);
                     } catch (ParsingException e) {
+                        ErrorHandler.handle(exchange, e);
+                    } catch (JsonSyntaxException e) {
                         ErrorHandler.handle(exchange, e);
                     }
                     break;

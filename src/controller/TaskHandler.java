@@ -7,6 +7,8 @@ import exception.NotFoundException;
 import exception.ParsingException;
 import exception.ValidationException;
 import model.Task;
+import model.TaskStatus;
+import model.Type;
 import service.TaskManager;
 
 import java.io.IOException;
@@ -42,6 +44,12 @@ public class TaskHandler extends CommonHandler implements HttpHandler {
                         int taskId = getTaskIdInBodyRequest(body);
                         Task task = getGson().fromJson(body, Task.class);
                         if (taskId == 0) {    // если в теле запроса не найден id, то это создание задачи
+                            task.setTaskType(Type.TASK);
+                            task.setEpicId(0);
+                            task.setEmptySubtasks();
+                            if (task.getStatus() == null) {
+                                task.setStatus(TaskStatus.NEW);
+                            }
                             manager.createTask(task);
                             sendEmptyResponse(httpExchange, 201);
                             break;

@@ -121,7 +121,7 @@ public class InMemoryTaskManager implements TaskManager {
         // Проверка прикрепленного эпика
         if (subtasks.containsKey(subtask.getEpicId()) || !epics.containsKey(subtask.getEpicId())) {
             throw new ManagerSaveException("В подзадаче неверно указан epicId=" + subtask.getEpicId() +
-                    " проверьте введенные данные");
+                    " Эпика с таким id не существует!");
         }
         subtask.setId(generateID());
         addTaskByPriority(subtask);    // добавляем в множество подзадачу

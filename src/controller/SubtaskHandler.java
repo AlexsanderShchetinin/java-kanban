@@ -7,6 +7,8 @@ import exception.NotFoundException;
 import exception.ParsingException;
 import exception.ValidationException;
 import model.Subtask;
+import model.TaskStatus;
+import model.Type;
 import service.TaskManager;
 
 import java.io.IOException;
@@ -41,6 +43,11 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
                         int taskId = getTaskIdInBodyRequest(body);
                         Subtask subtask = getGson().fromJson(body, Subtask.class);
                         if (taskId == 0) {    // если в теле запроса не найден id, то это создание подзадачи
+                            subtask.setTaskType(Type.SUBTASK);
+                            subtask.setEmptySubtasks();
+                            if (subtask.getStatus() == null) {
+                                subtask.setStatus(TaskStatus.NEW);
+                            }
                             manager.createSubtask(subtask);
                             sendEmptyResponse(exchange, 201);
                             break;

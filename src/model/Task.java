@@ -40,6 +40,14 @@ public class Task {
         this.startTime = null;
     }
 
+    public void setTaskType(Type type) {
+        this.taskType = type;
+    }
+
+    public void setEmptySubtasks() {
+        this.subtasks = null;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -98,6 +106,7 @@ public class Task {
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
+
 
     public LocalDateTime getEndTime() {
         return Optional.of(startTime.plus(duration)).orElse(null);

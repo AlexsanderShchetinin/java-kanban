@@ -78,7 +78,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
             // Проверяем что обновление не проходит
             assertEquals(subtaskAfterUpdate, expectedSubtask, "Подзадача обновлена с некорректным эпиком");
         } catch (ManagerSaveException e) {
-            assertEquals("В подзадаче неверно указан epicId=2 проверьте введенные данные", e.getMessage(),
+            assertEquals("В подзадаче неверно указан epicId=2 Эпика с таким id не существует!", e.getMessage(),
                     "Не удалось отловить исключение при смене id подзадачи");
         }
     }

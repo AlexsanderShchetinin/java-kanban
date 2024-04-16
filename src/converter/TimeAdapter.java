@@ -3,10 +3,12 @@ package converter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import exception.ParsingException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class TimeAdapter extends TypeAdapter<LocalDateTime> {
 
@@ -25,9 +27,10 @@ public class TimeAdapter extends TypeAdapter<LocalDateTime> {
     @Override
     public LocalDateTime read(final JsonReader jsonReader) throws IOException {
         final String string = jsonReader.nextString();
-        if (!string.equals("null")) {
+        try {
             return LocalDateTime.parse(string, DATE_TIME_FORMAT_1);
+        } catch (DateTimeParseException e) {
+            throw new ParsingException("Неверный формат даты: " + string + " необходим dd.MM.yyyy HH:mm");
         }
-        return null;
     }
 }

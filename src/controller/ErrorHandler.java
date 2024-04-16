@@ -1,5 +1,6 @@
 package controller;
 
+import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
@@ -19,6 +20,11 @@ public class ErrorHandler extends CommonHandler {
     public static void handle(HttpExchange exchange, NumberFormatException e) throws IOException {
         e.printStackTrace();
         sendGetResponse(exchange, getGson().toJson("По данному id ресурс не найден"), 404);
+    }
+
+    public static void handle(HttpExchange exchange, JsonSyntaxException e) throws IOException {
+        e.printStackTrace();
+        sendGetResponse(exchange, getGson().toJson(e.getMessage()), 400);
     }
 
 
