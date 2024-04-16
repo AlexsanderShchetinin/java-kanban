@@ -52,10 +52,6 @@ public class Task {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public TaskStatus getStatus() {
         return status;
     }
