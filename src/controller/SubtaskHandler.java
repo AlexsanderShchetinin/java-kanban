@@ -7,6 +7,7 @@ import exception.NotFoundException;
 import exception.ParsingException;
 import exception.ValidationException;
 import model.Subtask;
+import model.Task;
 import model.TaskStatus;
 import model.Type;
 import service.TaskManager;
@@ -39,19 +40,15 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
                 case POST:
                     try {
                         String body = getBodyRequest(exchange);
-                        checkBodyPOST_Request(body);  // проверка при парсинге тела запроса ParsingException
-                        int taskId = getTaskIdInBodyRequest(body);
                         Subtask subtask = getGson().fromJson(body, Subtask.class);
-                        if (taskId == 0) {    // если в теле запроса не найден id, то это создание подзадачи
-                            subtask.setTaskType(Type.SUBTASK);
-                            subtask.setEmptySubtasks();
-                            if (subtask.getStatus() == null) {
-                                subtask.setStatus(TaskStatus.NEW);
-                            }
+                        // если в теле запроса не найден id, то это создание подзадачи
+                        if (checkBodyPOST_Request(body)) {    // + проверка при парсинге тела запроса ParsingException
+                            subtask = (Subtask) checkJsonTask(subtask);
                             manager.createSubtask(subtask);
                             sendEmptyResponse(exchange, 201);
                             break;
                         }
+                        subtask = (Subtask) checkJsonTask(subtask);
                         manager.updateSubtask(subtask);    // иначе обновляем подзадачу по найденному id
                         sendEmptyResponse(exchange, 200);
                     } catch (ValidationException e) {
@@ -81,6 +78,15 @@ public class SubtaskHandler extends CommonHandler implements HttpHandler {
         } finally {
             exchange.close();
         }
+    }
 
+    @Override
+    protected Task checkJsonTask(Task task) {
+        task.setTaskType(Type.SUBTASK);
+        task.setEmptySubtasks();
+        if (task.getStatus() == null) {
+            task.setStatus(TaskStatus.NEW);
+        }
+        return task;
     }
 }

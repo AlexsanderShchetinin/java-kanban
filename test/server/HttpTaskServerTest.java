@@ -189,9 +189,13 @@ class HttpTaskServerTest {
         Task newTaskWithTime2 = new Task("Задача с временем_2", "ShouldPOST_InRequest_TaskCreating",
                 "02.01.2000 10:00", 0);
 
-        String jsonString1 = getGson().toJson(newTask);
-        String jsonString2 = getGson().toJson(newTaskWithTime);
-        String jsonString3 = getGson().toJson(newTaskWithTime2);
+        String jsonString4 = getGson().toJson(newTask);
+        String jsonString1 = jsonString4.replace("\"id\": 0", "\"id\": null");
+        String jsonString5 = getGson().toJson(newTaskWithTime);
+        String jsonString2 = jsonString5.replace("\"id\": 0", "\"id\": null");
+        String jsonString6 = getGson().toJson(newTaskWithTime2);
+        String jsonString3 = jsonString6.replace("\"id\": 0", "\"id\": null");
+
 
         HttpRequest TaskRequest1 = buildPOST_Request(createURI("/tasks"), jsonString1);
         HttpResponse<String> response1 = client.send(TaskRequest1, HttpResponse.BodyHandlers.ofString());
@@ -306,24 +310,18 @@ class HttpTaskServerTest {
     @DisplayName("Проверка исключений при построении некорректного POST запроса")
     void shouldCheckParsingException() throws IOException, InterruptedException {
         client = HttpClient.newHttpClient();
-        Subtask newSubtask = new Subtask("Подзадача с временем_1",
-                "shouldCheckParsingException", 0, "01.01.2000 10:00", 1441);
         Task newTask = new Task("Задача с временем_1",
                 "shouldCheckParsingException", "01.01.2001 10:00", 1441);
         String taskString = getGson().toJson(newTask);
-        String taskErrorJsonString = taskString.replace("taskType", "error");
-        String taskErrorValueString = taskString.replace("NEW", "errorVal");
+        String taskErrorJsonString = taskString.replace("name", "error");
+        String taskErrorValueString = taskString.replace("shouldCheckParsingException", "   ");
         newTask.setEpicId(1);
         Epic newEpic = new Epic("Эпик 1", "shouldCheckParsingException");
         String epicString = getGson().toJson(newEpic);
         String epicErrorJsonString = epicString.replace("id", "error");
-        String epicErrorValueJsonString = epicString.replace("EPIC", "error");
-        newEpic.setEpicId(2);
 
         String emptyString = "";
-        String subtaskWithErrorEpicString = getGson().toJson(newSubtask);
         String taskWithEpicString = getGson().toJson(newTask);
-        String epicWithEpicString = getGson().toJson(newEpic);
 
         HttpRequest taskRequestEmpty = buildPOST_Request(createURI("/tasks"), emptyString);
         HttpRequest subtaskRequestEmpty = buildPOST_Request(createURI("/subtasks"), emptyString);
@@ -331,34 +329,22 @@ class HttpTaskServerTest {
         HttpRequest taskRequestError = buildPOST_Request(createURI("/tasks"), taskWithEpicString);
         HttpRequest taskRequestError2 = buildPOST_Request(createURI("/tasks"), taskErrorJsonString);
         HttpRequest taskRequestError3 = buildPOST_Request(createURI("/tasks"), taskErrorValueString);
-        HttpRequest subtaskRequestError = buildPOST_Request(createURI("/subtasks"), subtaskWithErrorEpicString);
-        HttpRequest epicRequestError = buildPOST_Request(createURI("/epics"), epicWithEpicString);
         HttpRequest epicRequestError2 = buildPOST_Request(createURI("/epics"), epicErrorJsonString);
-        HttpRequest epicRequestError3 = buildPOST_Request(createURI("/epics"), epicErrorValueJsonString);
-
 
         HttpResponse<String> response1 = client.send(taskRequestEmpty, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response2 = client.send(subtaskRequestEmpty, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response3 = client.send(epicRequestEmpty, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response4 = client.send(taskRequestError, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response5 = client.send(taskRequestError2, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response6 = client.send(taskRequestError3, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response7 = client.send(subtaskRequestError, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response8 = client.send(epicRequestError, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response9 = client.send(epicRequestError2, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response10 = client.send(epicRequestError3, HttpResponse.BodyHandlers.ofString());
 
         // тест статуса ответа при неправильном теле запроса
         assertEquals(400, response1.statusCode(), "статус ответа != 400");
         assertEquals(400, response2.statusCode(), "статус ответа != 400");
         assertEquals(400, response3.statusCode(), "статус ответа != 400");
-        assertEquals(400, response4.statusCode(), "статус ответа != 400");
         assertEquals(400, response5.statusCode(), "статус ответа != 400");
         assertEquals(400, response6.statusCode(), "статус ответа != 400");
-        assertEquals(400, response7.statusCode(), "статус ответа != 400");
-        assertEquals(400, response8.statusCode(), "статус ответа != 400");
         assertEquals(400, response9.statusCode(), "статус ответа != 400");
-        assertEquals(400, response10.statusCode(), "статус ответа != 400");
 
     }
 
@@ -397,9 +383,12 @@ class HttpTaskServerTest {
         Subtask newTaskWithTime2 = new Subtask("Подзадача с временем_2",
                 "ShouldPOST_InRequest_SubtaskCreating", 1, "02.01.2000 10:00", 0);
 
-        String jsonString1 = getGson().toJson(newTask);
-        String jsonString2 = getGson().toJson(newTaskWithTime);
-        String jsonString3 = getGson().toJson(newTaskWithTime2);
+        String jsonString4 = getGson().toJson(newTask);
+        String jsonString1 = jsonString4.replace("\"id\": 0", "\"id\": null");
+        String jsonString5 = getGson().toJson(newTaskWithTime);
+        String jsonString2 = jsonString5.replace("\"id\": 0", "\"id\": null");
+        String jsonString6 = getGson().toJson(newTaskWithTime2);
+        String jsonString3 = jsonString6.replace("\"id\": 0", "\"id\": null");
 
         HttpRequest taskRequest1 = buildPOST_Request(createURI("/subtasks"), jsonString1);
         HttpResponse<String> response1 = client.send(taskRequest1, HttpResponse.BodyHandlers.ofString());
@@ -540,7 +529,8 @@ class HttpTaskServerTest {
 
         int beginSizeEpics = manager.getEpicList().size();
         Epic newEpic = new Epic("ЭпикТест1", "ShouldPOST_InRequest_EpicCreating");
-        String jsonString = getGson().toJson(newEpic);
+        String jsonString1 = getGson().toJson(newEpic);
+        String jsonString = jsonString1.replace("\"id\": 0", "\"id\": null");
         HttpRequest epicRequest = buildPOST_Request(createURI("/epics"), jsonString);
         HttpResponse<String> response = client.send(epicRequest, HttpResponse.BodyHandlers.ofString());
         int lastSizeEpics = manager.getEpicList().size();

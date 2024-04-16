@@ -6,6 +6,8 @@ import converter.DurationAdapter;
 import converter.TimeAdapter;
 import exception.ParsingException;
 import model.Task;
+import model.TaskStatus;
+import model.Type;
 import service.TaskManager;
 
 import java.io.IOException;
@@ -13,7 +15,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 // Абстрактный класс Handler для HttpTaskServer
 // Содержит в себе общие методы и переменные для унаследованных Handlers
@@ -59,13 +60,6 @@ public abstract class CommonHandler {
         return -1;
     }
 
-    // получение id задачи из тела запроса (если id не задано или нет тела запроса возвращается -1
-    protected int getTaskIdInBodyRequest(String body) {
-        Optional<String> optBody = Optional.of(body);
-        if (optBody.get().isEmpty()) return 0;
-        return getGson().fromJson(optBody.get(), Task.class).getId();
-    }
-
     // получение тела запроса в формате строки
     protected final String getBodyRequest(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -75,22 +69,27 @@ public abstract class CommonHandler {
         return body;
     }
 
-    protected void checkBodyPOST_Request(String jsonBody) throws IOException {
+    // метод проверки тела запроса: если id == null то возвращает null
+    protected boolean checkBodyPOST_Request(String jsonBody) throws IOException {
         JsonElement jsonElement = JsonParser.parseString(jsonBody);
         if (!jsonElement.isJsonObject()) {
             throw new ParsingException("В тело запроса передан не JSON объект!");
         }
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         try {
-            if (!jsonObject.get("id").isJsonNull()) {
-                throw new ParsingException("при POST запросе поле id должно быть заполнено как null");
+            String name = jsonObject.get("name").getAsString();
+            String description = jsonObject.get("description").getAsString();
+            if (name.isEmpty() || name.isBlank() || description.isBlank() || description.isEmpty()) {
+                throw new ParsingException("Наименование или описание не может быть пустым");
             }
-            jsonObject.get("name").getAsString();
-            jsonObject.get("description").getAsString();
+            if (jsonObject.get("id").isJsonNull()) {
+                return true;
+            }
         } catch (NullPointerException exception) {
             throw new ParsingException("В теле запроса как минимум одно поле имеет неверное название! " +
                     "Проверьте поля name и description.");
         }
+        return false;
     }
 
     // определение эндпоинтов
@@ -167,5 +166,15 @@ public abstract class CommonHandler {
         GET_HISTORY,
         GET_PRIORITIZED_TASKS,
         UNKNOWN
+    }
+
+    protected Task checkJsonTask(Task task) {
+        task.setTaskType(Type.TASK);
+        task.setEpicId(0);
+        task.setEmptySubtasks();
+        if (task.getStatus() == null) {
+            task.setStatus(TaskStatus.NEW);
+        }
+        return task;
     }
 }
