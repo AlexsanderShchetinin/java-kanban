@@ -326,7 +326,6 @@ class HttpTaskServerTest {
         HttpRequest taskRequestEmpty = buildPOST_Request(createURI("/tasks"), emptyString);
         HttpRequest subtaskRequestEmpty = buildPOST_Request(createURI("/subtasks"), emptyString);
         HttpRequest epicRequestEmpty = buildPOST_Request(createURI("/epics"), emptyString);
-        HttpRequest taskRequestError = buildPOST_Request(createURI("/tasks"), taskWithEpicString);
         HttpRequest taskRequestError2 = buildPOST_Request(createURI("/tasks"), taskErrorJsonString);
         HttpRequest taskRequestError3 = buildPOST_Request(createURI("/tasks"), taskErrorValueString);
         HttpRequest epicRequestError2 = buildPOST_Request(createURI("/epics"), epicErrorJsonString);
