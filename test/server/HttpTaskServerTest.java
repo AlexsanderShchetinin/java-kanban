@@ -316,10 +316,6 @@ class HttpTaskServerTest {
         String taskErrorJsonString = taskString.replace("name", "error");
         String taskErrorValueString = taskString.replace("shouldCheckParsingException", "   ");
         newTask.setEpicId(1);
-        Epic newEpic = new Epic("Эпик 1", "shouldCheckParsingException");
-        String epicString = getGson().toJson(newEpic);
-        String epicErrorJsonString = epicString.replace("id", "error");
-
         String emptyString = "";
 
         HttpRequest taskRequestEmpty = buildPOST_Request(createURI("/tasks"), emptyString);
@@ -327,14 +323,12 @@ class HttpTaskServerTest {
         HttpRequest epicRequestEmpty = buildPOST_Request(createURI("/epics"), emptyString);
         HttpRequest taskRequestError2 = buildPOST_Request(createURI("/tasks"), taskErrorJsonString);
         HttpRequest taskRequestError3 = buildPOST_Request(createURI("/tasks"), taskErrorValueString);
-        HttpRequest epicRequestError2 = buildPOST_Request(createURI("/epics"), epicErrorJsonString);
 
         HttpResponse<String> response1 = client.send(taskRequestEmpty, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response2 = client.send(subtaskRequestEmpty, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response3 = client.send(epicRequestEmpty, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response5 = client.send(taskRequestError2, HttpResponse.BodyHandlers.ofString());
         HttpResponse<String> response6 = client.send(taskRequestError3, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response9 = client.send(epicRequestError2, HttpResponse.BodyHandlers.ofString());
 
         // тест статуса ответа при неправильном теле запроса
         assertEquals(400, response1.statusCode(), "статус ответа != 400");
@@ -342,7 +336,6 @@ class HttpTaskServerTest {
         assertEquals(400, response3.statusCode(), "статус ответа != 400");
         assertEquals(400, response5.statusCode(), "статус ответа != 400");
         assertEquals(400, response6.statusCode(), "статус ответа != 400");
-        assertEquals(400, response9.statusCode(), "статус ответа != 400");
 
     }
 

@@ -39,7 +39,7 @@ public class EpicHandler extends CommonHandler implements HttpHandler {
                         ErrorHandler.handle(exchange, e);
                     }
                     break;
-                case POST:
+                case POST:    // для эпиков реализовано только создание (обновление эпика только через подзадачи)
                     try {
                         String body = getBodyRequest(exchange);
                         checkBodyPOST_Request(body);    // проверка при парсинге тела запроса

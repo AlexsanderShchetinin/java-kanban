@@ -88,7 +88,10 @@ public class Task {
     }
 
     public long getDurationToMinutes() {
-        return duration.toMinutes();
+        if (duration != null) {
+            return duration.toMinutes();
+        }
+        return 0;
     }
 
     public void setDurationOfMinutes(long duration) {

@@ -69,7 +69,7 @@ public abstract class CommonHandler {
         return body;
     }
 
-    // метод проверки тела запроса: если id == null то возвращает null
+    // метод проверки тела запроса: если id == null то возвращает true
     protected boolean checkBodyPOST_Request(String jsonBody) throws IOException {
         JsonElement jsonElement = JsonParser.parseString(jsonBody);
         if (!jsonElement.isJsonObject()) {
@@ -81,6 +81,9 @@ public abstract class CommonHandler {
             String description = jsonObject.get("description").getAsString();
             if (name.isEmpty() || name.isBlank() || description.isBlank() || description.isEmpty()) {
                 throw new ParsingException("Наименование или описание не может быть пустым");
+            }
+            if (!jsonObject.has("id")) {
+                return true;
             }
             if (jsonObject.get("id").isJsonNull()) {
                 return true;
