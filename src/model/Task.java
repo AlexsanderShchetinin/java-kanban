@@ -1,5 +1,7 @@
 package model;
 
+import converter.TimeAdapter;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ public class Task {
     protected String description;
     protected TaskStatus status;
     protected int id;
-    protected int epicId;
+    protected Integer epicId;
     protected ArrayList<Subtask> subtasks;
     protected Type taskType;
     protected Duration duration;
@@ -25,7 +27,7 @@ public class Task {
         this.status = TaskStatus.NEW;
         this.taskType = Type.TASK;
         this.duration = Duration.ofMinutes(duration);
-        this.startTime = LocalDateTime.parse(startTime, TimeFormat.DATE_TIME_FORMAT_1);
+        this.startTime = LocalDateTime.parse(startTime, TimeAdapter.DATE_TIME_FORMAT_1);
     }
 
     public Task(String name, String description) {
@@ -38,12 +40,16 @@ public class Task {
         this.startTime = null;
     }
 
-    public String getDescription() {
-        return description;
+    public void setTaskType(Type type) {
+        this.taskType = type;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setEmptySubtasks() {
+        this.subtasks = null;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public TaskStatus getStatus() {
@@ -71,7 +77,10 @@ public class Task {
     }
 
     public Integer getEpicId() {
-        return null;
+        if (epicId == null) {
+            return null;
+        }
+        return epicId;
     }
 
     public void setEpicId(int epicId) {
@@ -79,7 +88,10 @@ public class Task {
     }
 
     public long getDurationToMinutes() {
-        return duration.toMinutes();
+        if (duration != null) {
+            return duration.toMinutes();
+        }
+        return 0;
     }
 
     public void setDurationOfMinutes(long duration) {
@@ -93,6 +105,7 @@ public class Task {
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
+
 
     public LocalDateTime getEndTime() {
         return Optional.of(startTime.plus(duration)).orElse(null);

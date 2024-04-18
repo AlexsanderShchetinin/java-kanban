@@ -48,7 +48,7 @@ public class InMemoryHistoryManager implements HistoryManager {
 
         @Override
         public int hashCode() {
-            return Objects.hash(item, next, prev);
+            return Objects.hash(item);
         }
     }
 
@@ -75,7 +75,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
 
-    public void removeNode(Node node) {
+    private void removeNode(Node node) {
         if (node != null) {
             Node nodePrev = node.prev;
             Node nodeNext = node.next;

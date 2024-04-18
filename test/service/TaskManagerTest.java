@@ -1,8 +1,12 @@
 package service;
 
+import converter.TimeAdapter;
 import exception.ManagerSaveException;
 import exception.ValidationException;
-import model.*;
+import model.Epic;
+import model.Subtask;
+import model.Task;
+import model.TaskStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +78,7 @@ abstract class TaskManagerTest<T extends TaskManager> {
             // Проверяем что обновление не проходит
             assertEquals(subtaskAfterUpdate, expectedSubtask, "Подзадача обновлена с некорректным эпиком");
         } catch (ManagerSaveException e) {
-            assertEquals("Подзадача связана с некорректным эпиком", e.getMessage(),
+            assertEquals("В подзадаче неверно указан epicId=2 Эпика с таким id не существует!", e.getMessage(),
                     "Не удалось отловить исключение при смене id подзадачи");
         }
     }
@@ -196,6 +200,10 @@ abstract class TaskManagerTest<T extends TaskManager> {
             taskManager.createSubtask(new Subtask("Подзадача " + i, "Описание " + i, epic2.getId(),
                     "03.04.2024 1" + i + ":00", 23));
         }
+        taskManager.createSubtask(new Subtask("Подзадача J", "Описание: без времени ", epic2.getId()));
+        taskManager.createTask(new Task("Task", "Task without time"));
+        taskManager.createTask(new Task("Task", "Task with time",
+                "03.04.2024 19:00", 45));
         Subtask subtask1 = taskManager.getListSubtasksFromEpic(epic.getId()).get(0);
 
         taskManager.removeSubtask(subtask1.getId());
@@ -209,62 +217,6 @@ abstract class TaskManagerTest<T extends TaskManager> {
         taskManager.clearSubtasks();
 
         assertEquals(0, epic.getSubtasks().size(), "Все подзадачи не удаляются.");
-    }
-
-    @Test
-    @DisplayName("должна рассчитывать статусы и время выполнения у эпиков")
-    void shouldCalculateEpicStatusAnd() {
-        // предварительное создание эпиков и подзадач с временем начала (с приоритетом)
-        // id эпиков - 1, 11, 21, 31, 41 и 51
-        // id подзадач в промежутках
-        for (int i = 1; i < 6; i++) {
-            taskManager.createEpic(new Epic("Epic_" + i, "Описание эпика №" + i));
-            for (int j = 1; j < 10; j++) {
-                taskManager.createSubtask(new Subtask("Subtask_" + i + "." + j, "Description" + "." + j,
-                        taskManager.getEpic(10 * (i - 1) + 1).getId(),
-                        "0" + i + ".01.2024 1" + j + ":01", 58));
-            }
-        }
-        Epic lastEpic = taskManager.createEpic(new Epic("Крайний эпик", "Описание крайнего эпика"));
-        for (int j = 1; j < 6; j++) {
-            taskManager.createSubtask(new Subtask("CheckSubtask" + j, "CheckDescription" + j,
-                    lastEpic.getId(), "09.01.2024 1" + j + ":01", 29));
-        }
-
-        // Расчет времени выполнения эпика (у первых 5 штук)
-        // Время всегда заканчивается в 19:59, а продолжительность = 19:59 - 11:01 = 480 + 58 = 538
-        for (int i = 1; i < 6; i++) {
-            String checkTime = taskManager.getEpic(10 * (i - 1) + 1).getEndTime().format(TimeFormat.TIME_FORMAT_1);
-            assertEquals("19:59", checkTime, "Ошибка в расчете endTime у эпика");
-            assertEquals(538, taskManager.getEpic(10 * (i - 1) + 1).getDurationToMinutes(),
-                    "Ошибка в расчете продолжительности выполнения эпика");
-        }
-
-        // расчет статуса Epic
-        // 1. Все подзадачи со статусом NEW
-        Epic calculateEpic1 = taskManager.checkEpicStatus(lastEpic);
-        assertEquals(TaskStatus.NEW, calculateEpic1.getStatus(), "ошибка при расчете статуса Эпика NEW.");
-
-        // 2. Все подзадачи со статусом DONE
-        taskManager.getListSubtasksFromEpic(1)
-                .forEach(subtask -> subtask.setStatus(TaskStatus.DONE));
-        Epic calculateEpic2 = taskManager.checkEpicStatus(taskManager.getEpic(1));
-        assertEquals(TaskStatus.DONE, calculateEpic2.getStatus(), "ошибка при расчете статуса Эпика DONE.");
-
-        // 3. Подзадачи со статусами NEW и DONE
-        taskManager.getListSubtasksFromEpic(11).stream()
-                .filter(subtask -> subtask.getId() > 15)    // оставляем 4 подзадачи в статусе NEW, остальные меняем
-                .forEach(subtask -> subtask.setStatus(TaskStatus.DONE));
-        Epic calculateEpic3 = taskManager.checkEpicStatus(taskManager.getEpic(11));
-        assertEquals(TaskStatus.IN_PROGRESS, calculateEpic3.getStatus(),
-                "ошибка при первом расчете статуса Эпика IN_PROGRESS.");
-
-        // 4. Подзадачи со статусом IN_PROGRESS
-        taskManager.getListSubtasksFromEpic(21)
-                .forEach(subtask -> subtask.setStatus(TaskStatus.IN_PROGRESS));
-        Epic calculateEpic4 = taskManager.checkEpicStatus(taskManager.getEpic(21));
-        assertEquals(TaskStatus.IN_PROGRESS, calculateEpic4.getStatus(),
-                "ошибка при втором расчете статуса Эпика IN_PROGRESS.");
     }
 
     @Test
@@ -312,6 +264,62 @@ abstract class TaskManagerTest<T extends TaskManager> {
         assertThrows(ValidationException.class, () -> {
             taskManager.updateTask(taskManager.getTask(8));
         }, "Расчет пересечения интервалов не сработал при частичном пересечении интервалов");
+    }
+
+    @Test
+    @DisplayName("должна рассчитывать статусы и время выполнения у эпиков")
+    void shouldCalculateEpicStatusAnd() {
+        // предварительное создание эпиков и подзадач с временем начала (с приоритетом)
+        // id эпиков - 1, 11, 21, 31, 41 и 51
+        // id подзадач в промежутках
+        for (int i = 1; i < 6; i++) {
+            taskManager.createEpic(new Epic("Epic_" + i, "Описание эпика №" + i));
+            for (int j = 1; j < 10; j++) {
+                taskManager.createSubtask(new Subtask("Subtask_" + i + "." + j, "Description" + "." + j,
+                        taskManager.getEpic(10 * (i - 1) + 1).getId(),
+                        "0" + i + ".01.2024 1" + j + ":01", 58));
+            }
+        }
+        Epic lastEpic = taskManager.createEpic(new Epic("Крайний эпик", "Описание крайнего эпика"));
+        for (int j = 1; j < 6; j++) {
+            taskManager.createSubtask(new Subtask("CheckSubtask" + j, "CheckDescription" + j,
+                    lastEpic.getId(), "09.01.2024 1" + j + ":01", 29));
+        }
+
+        // Расчет времени выполнения эпика (у первых 5 штук)
+        // Время всегда заканчивается в 19:59, а продолжительность = 19:59 - 11:01 = 480 + 58 = 538
+        for (int i = 1; i < 6; i++) {
+            String checkTime = taskManager.getEpic(10 * (i - 1) + 1).getEndTime().format(TimeAdapter.TIME_FORMAT_1);
+            assertEquals("19:59", checkTime, "Ошибка в расчете endTime у эпика");
+            assertEquals(538, taskManager.getEpic(10 * (i - 1) + 1).getDurationToMinutes(),
+                    "Ошибка в расчете продолжительности выполнения эпика");
+        }
+
+        // расчет статуса Epic
+        // 1. Все подзадачи со статусом NEW
+        Epic calculateEpic1 = taskManager.checkEpicStatus(lastEpic);
+        assertEquals(TaskStatus.NEW, calculateEpic1.getStatus(), "ошибка при расчете статуса Эпика NEW.");
+
+        // 2. Все подзадачи со статусом DONE
+        taskManager.getListSubtasksFromEpic(1)
+                .forEach(subtask -> subtask.setStatus(TaskStatus.DONE));
+        Epic calculateEpic2 = taskManager.checkEpicStatus(taskManager.getEpic(1));
+        assertEquals(TaskStatus.DONE, calculateEpic2.getStatus(), "ошибка при расчете статуса Эпика DONE.");
+
+        // 3. Подзадачи со статусами NEW и DONE
+        taskManager.getListSubtasksFromEpic(11).stream()
+                .filter(subtask -> subtask.getId() > 15)    // оставляем 4 подзадачи в статусе NEW, остальные меняем
+                .forEach(subtask -> subtask.setStatus(TaskStatus.DONE));
+        Epic calculateEpic3 = taskManager.checkEpicStatus(taskManager.getEpic(11));
+        assertEquals(TaskStatus.IN_PROGRESS, calculateEpic3.getStatus(),
+                "ошибка при первом расчете статуса Эпика IN_PROGRESS.");
+
+        // 4. Подзадачи со статусом IN_PROGRESS
+        taskManager.getListSubtasksFromEpic(21)
+                .forEach(subtask -> subtask.setStatus(TaskStatus.IN_PROGRESS));
+        Epic calculateEpic4 = taskManager.checkEpicStatus(taskManager.getEpic(21));
+        assertEquals(TaskStatus.IN_PROGRESS, calculateEpic4.getStatus(),
+                "ошибка при втором расчете статуса Эпика IN_PROGRESS.");
     }
 
 }

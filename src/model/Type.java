@@ -5,4 +5,5 @@ public enum Type {
     SUBTASK,
     EPIC,
     HISTORY
+
 }

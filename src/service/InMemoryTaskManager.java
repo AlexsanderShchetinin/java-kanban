@@ -3,10 +3,7 @@ package service;
 import exception.ManagerSaveException;
 import exception.NotFoundException;
 import exception.ValidationException;
-import model.Epic;
-import model.Subtask;
-import model.Task;
-import model.TaskStatus;
+import model.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -20,6 +17,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected static int identifier;
     protected final HistoryManager historyManager;
     protected final TreeSet<Task> prioritizedTasks;
+    protected final Map<Integer, Task> tasksCollect;
 
     public InMemoryTaskManager() {
         this.tasks = new HashMap<>();
@@ -37,6 +35,8 @@ public class InMemoryTaskManager implements TaskManager {
             return 0;
         };
         this.prioritizedTasks = new TreeSet<>(startTimeComparator);
+        // мапа для загрузки данных из файлового хранилища во время запука FileBackedTaskManager
+        tasksCollect = new HashMap<>();
     }
 
 
@@ -50,14 +50,19 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
+    public HistoryManager getHistoryManager() {
+        return historyManager;
+    }
+
+    @Override
     public Task createTask(Task task) {
         if (tasks.containsKey(task.getId())) {
             throw new ValidationException("Задача c id=" + task.getId() + " уже создана!");
         }
         task.setId(generateID());
-        tasks.put(task.getId(), task);
-        historyManager.add(task);
         addTaskByPriority(task);    // добавляем в приоритетные задачи
+        tasks.put(task.getId(), task);    // вносим задачу в память менеджера
+        historyManager.add(task);    // добавляем в историю
         return task;
     }
 
@@ -79,18 +84,33 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public void clearTasks() {
         // очищаем из приоритетного множества задачи
+        List<Task> priorityTasks = getPrioritizedTasks();
         for (Task task : tasks.values()) {
-            prioritizedTasks.remove(task);
+            priorityTasks.remove(task);
         }
+        prioritizedTasks.clear();
+        prioritizedTasks.addAll(priorityTasks);
         tasks.clear();    // очищаем сами задачи
     }
 
     @Override
     public void updateTask(Task newTask) {
+        if (tasks.isEmpty()) {
+            throw new ManagerSaveException("Задач для обновления не существует!");
+        }
         if (tasks.containsKey(newTask.getId())) {    // проверяем что задача уже есть в мапе
-            tasks.put(newTask.getId(), newTask);    // обновляем
             // заменяем задачу в приоритетном множестве на случай, если в newTask изменился приоритет
             addTaskByPriority(newTask);
+            tasks.put(newTask.getId(), newTask);    // обновляем
+            historyManager.add(newTask);
+        } else {
+            StringBuilder billId = new StringBuilder();
+            for (Integer i : tasks.keySet()) {
+                billId.append(i).append(",");
+            }
+            billId.deleteCharAt(billId.lastIndexOf(","));
+            throw new ManagerSaveException("Подзадачи с id=" + newTask.getId() + " для обновления не существует!" +
+                    " Выберете один из следующих id: " + billId);
         }
     }
 
@@ -98,9 +118,14 @@ public class InMemoryTaskManager implements TaskManager {
     public void removeTask(int id) {
         if (tasks.containsKey(id)) {
             // удаляем задачу из всех таблиц и списков
-            prioritizedTasks.remove(tasks.get(id));
+            List<Task> priorityTasks = getPrioritizedTasks();
+            priorityTasks.remove(tasks.get(id));
+            prioritizedTasks.clear();
+            prioritizedTasks.addAll(priorityTasks);
             tasks.remove(id);
             historyManager.remove(id);
+        } else {
+            throw new ManagerSaveException("Задачи с id = " + id + " для удаления не существует!");
         }
 
     }
@@ -110,17 +135,19 @@ public class InMemoryTaskManager implements TaskManager {
         if (subtasks.containsKey(subtask.getId())) {
             throw new ValidationException("Подзадача c id=" + subtask.getId() + " уже создана!");
         }
-        // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if (subtasks.containsKey(subtask.getEpicId())) {
-            throw new ManagerSaveException("Подзадача связана с некорректным эпиком");
+        // Проверка прикрепленного эпика
+        if (subtasks.containsKey(subtask.getEpicId()) || !epics.containsKey(subtask.getEpicId())) {
+            throw new ManagerSaveException("В подзадаче неверно указан epicId=" + subtask.getEpicId() +
+                    " Эпика с таким id не существует!");
         }
         subtask.setId(generateID());
+        addTaskByPriority(subtask);    // добавляем в множество подзадачу
+        // добавляем задачу в память
         subtasks.put(subtask.getId(), subtask);
         // Обновляем эпик
         Epic updatingEpic = epics.get(subtask.getEpicId());
         updateEpic(updatingEpic);
         historyManager.add(subtask);    // делаем запись в истории
-        addTaskByPriority(subtask);    // // добавляем в множество подзадачу
         return subtask;
     }
 
@@ -146,17 +173,36 @@ public class InMemoryTaskManager implements TaskManager {
             listSubtaskByEpic.clear();
         }
         // очищаем из приоритетного множества подзадачи
+        List<Task> priorityTasks = getPrioritizedTasks();
         for (Task subtask : subtasks.values()) {
-            prioritizedTasks.remove(subtask);
+            priorityTasks.remove(subtask);
         }
+        prioritizedTasks.clear();
+        prioritizedTasks.addAll(priorityTasks);
         subtasks.clear();    // удаляем подзадачи
     }
 
     @Override
     public void updateSubtask(Subtask newSubtask) {
-        // Проверка прикрепленного эпика (эпик не должен содержать ид подзадач)
-        if (subtasks.containsKey(newSubtask.getEpicId())) return;
+        // Проверка прикрепленного эпика
+        if (subtasks.containsKey(newSubtask.getEpicId()) || !epics.containsKey(newSubtask.getEpicId())) {
+            throw new ManagerSaveException("В подзадаче неверно указан epicId=" + newSubtask.getEpicId() +
+                    " Эпика с таким id не существует!");
+        }
+        if (subtasks.isEmpty()) {
+            throw new ManagerSaveException("Подзадач для обновления не существует!");
+
+        }
         Subtask oldSubtask = subtasks.get(newSubtask.getId());
+        if (oldSubtask == null) {
+            StringBuilder billId = new StringBuilder();
+            for (Integer i : subtasks.keySet()) {
+                billId.append(i).append(",");
+            }
+            billId.deleteCharAt(billId.lastIndexOf(","));
+            throw new ManagerSaveException("Подзадачи с id=" + newSubtask.getId() + " для обновления не существует!" +
+                    " Выберете один из следующих id: " + billId);
+        }
         // проверяем совпадают ли ключи эпиков в старой и новой подзадаче
         if (!oldSubtask.getEpicId().equals(newSubtask.getEpicId())) {
             // иначе удаляем старую подзадачу в старом эпике
@@ -166,26 +212,34 @@ public class InMemoryTaskManager implements TaskManager {
             oldEpic.setSubtasks(subtasksOldEpic);
             epics.put(oldEpic.getId(), oldEpic);
         }
+        // заменяем задачу в приоритетном множестве на случай, если в newSubtask изменился приоритет
+        addTaskByPriority(newSubtask);
         // обновляем новую подзадачу
         subtasks.put(newSubtask.getId(), newSubtask);
         updateEpic(epics.get(newSubtask.getEpicId()));
-        // заменяем задачу в приоритетном множестве на случай, если в newSubtask изменился приоритет
-        addTaskByPriority(newSubtask);
+        historyManager.add(newSubtask);
     }
 
     @Override
     public void removeSubtask(int id) {
-        // удаляем подзадачу из эпика и обновляем эпик
-        int epicId = subtasks.get(id).getEpicId();
-        Epic epicAttached = epics.get(epicId);
-        ArrayList<Subtask> listSubtaskByEpic = epicAttached.getSubtasks();
-        listSubtaskByEpic.remove(subtasks.get(id));
-        epicAttached.setSubtasks(listSubtaskByEpic);
-        epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
-        // удаляем подзадачу из всех таблиц и списков
-        prioritizedTasks.remove(subtasks.get(id));
-        subtasks.remove(id);
-        historyManager.remove(id);
+        if (subtasks.containsKey(id)) {
+            // удаляем подзадачу из эпика и обновляем эпик
+            int epicId = subtasks.get(id).getEpicId();
+            Epic epicAttached = epics.get(epicId);
+            ArrayList<Subtask> listSubtaskByEpic = epicAttached.getSubtasks();
+            listSubtaskByEpic.remove(subtasks.get(id));
+            epicAttached.setSubtasks(listSubtaskByEpic);
+            epics.put(epicAttached.getId(), checkEpicStatus(epicAttached));
+            // удаляем подзадачу из всех таблиц и списков
+            List<Task> priorityTasks = getPrioritizedTasks();
+            priorityTasks.remove(subtasks.get(id));
+            prioritizedTasks.clear();
+            prioritizedTasks.addAll(priorityTasks);
+            subtasks.remove(id);
+            historyManager.remove(id);
+        } else {
+            throw new ManagerSaveException("Подзадачи с id = " + id + " для удаления не существует!");
+        }
     }
 
     @Override
@@ -203,7 +257,8 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public Epic createEpic(Epic epic) {
         if (epics.containsKey(epic.getId())) {
-            throw new ValidationException("Эпик c id=" + epic.getId() + " уже создан!");
+            throw new ValidationException("Эпик с id=" + epic.getId() + " уже создан!, " +
+                    "для обновления Эпика необходимо обновлять привязанные к нему подзадачи");
         }
         epic.setId(generateID());
         Epic newEpic = checkEpicStatus(epic);    // проверяем статус эпика и возвращаем корректный
@@ -236,14 +291,18 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void removeEpic(int id) {
-        // при удалении эпика удаляем связанные с ним подзадачи
-        Epic epic = epics.get(id);
-        ArrayList<Subtask> subtasksFromEpic = epic.getSubtasks();
-        for (Subtask subtask : subtasksFromEpic) {
-            subtasks.remove(subtask.getId());
+        if (epics.containsKey(id)) {
+            // при удалении эпика удаляем связанные с ним подзадачи
+            Epic epic = epics.get(id);
+            ArrayList<Subtask> subtasksFromEpic = epic.getSubtasks();
+            for (Subtask subtask : subtasksFromEpic) {
+                subtasks.remove(subtask.getId());
+            }
+            epics.remove(id);    // удаляем эпик
+            historyManager.remove(id);    // удаляем из истории
+        } else {
+            throw new ManagerSaveException("Подзадачи с id = " + id + " для удаления не существует!");
         }
-        epics.remove(id);    // удаляем эпик
-        historyManager.remove(id);    // удаляем из истории
     }
 
     @Override
@@ -254,18 +313,19 @@ public class InMemoryTaskManager implements TaskManager {
                 throw new ValidationException("Обновляемый эпик равен одной из существующих подзадач!");
             }
         }
-        Epic checkedEpic = checkEpicStatus(newEpic);    // проверяем корректность статуса эпика
         // обновляем список подзадач внутри эпика
         ArrayList<Subtask> newSubtasks = new ArrayList<>();
         for (Subtask subtask : subtasks.values()) {
-            if (checkedEpic.getId() == subtask.getEpicId()) {
+            if (newEpic.getId() == subtask.getEpicId()) {
                 newSubtasks.add(subtask);
             }
         }
-        checkedEpic.setSubtasks(newSubtasks);
+        newEpic.setSubtasks(newSubtasks);
+        Epic checkedEpic = checkEpicStatus(newEpic);    // проверяем корректность статуса эпика
         checkedEpic.calculateTimesEpic();    // обновляем время выполнения эпика
         // после этого обновляем сам эпик
         epics.put(checkedEpic.getId(), checkedEpic);
+        //historyManager.add(checkedEpic);
     }
 
     @Override
@@ -302,20 +362,35 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public List<Task> getPrioritizedTasks() {
+        if (prioritizedTasks.isEmpty()) {    // во время первого запуска программы, нужно обновить лист prioritizedTasks
+            List<Task> collect = tasksCollect.values().stream()
+                    .filter(task -> task.getStartTime() != null)
+                    // не учитываем эпики - они могут помешать добавлению новых задач и подзадач
+                    // (из-за своего периода = периоду от первой до последней подзадачи)
+                    // по факту этот период не равен времени выполнения всего эпика
+                    .filter(task -> task.getTaskType() != Type.EPIC)
+                    .collect(Collectors.toList());
+            prioritizedTasks.addAll(collect);
+        }
         return new ArrayList<>(prioritizedTasks);
     }
 
+
     private void addTaskByPriority(Task task) {
-        if (task.getStartTime() != null) {
+        if (task.getStartTime() != null && task.getTaskType() != Type.EPIC) {
             // в стриме проходимся по всем уже записанным задачам, если метод isCrossedTasks() вернет true
             // то задача попадет в итоговый emptyList. Далее если emptyList не пустой, то есть пересечение по времени
             // соответственно такую задачу нельзя добавлять в приоритезированные
             List<Task> emptyList = getPrioritizedTasks().stream()
+                    .filter(task1 -> task1.getStartTime() != null)
                     .filter(checkedTask -> isCrossedTasks(checkedTask, task))
                     .filter(checkedTask -> checkedTask.getId() != task.getId())    // исключаем одинаковые задачи
                     .collect(Collectors.toList());
             if (emptyList.isEmpty()) prioritizedTasks.add(task);
-            else throw new ValidationException("Имеется пересечение по времени выполнения с другими задачами!");
+            else {
+                identifier--;    // если создание задачи отменяется, то возвращать идентификатор в прежнее состояние
+                throw new ValidationException("Имеется пересечение по времени выполнения с другими задачами!");
+            }
         }
     }
 
@@ -338,11 +413,12 @@ public class InMemoryTaskManager implements TaskManager {
         return Objects.equals(tasks, that.tasks) &&
                 Objects.equals(subtasks, that.subtasks) &&
                 Objects.equals(epics, that.epics) &&
-                Objects.equals(historyManager, that.historyManager);
+                Objects.equals(historyManager, that.historyManager) &&
+                Objects.equals(tasksCollect, that.tasksCollect);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tasks, subtasks, epics, historyManager);
+        return Objects.hash(tasks, subtasks, epics, historyManager, tasksCollect);
     }
 }

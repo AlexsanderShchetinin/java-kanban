@@ -1,6 +1,7 @@
-package service;
+package converter;
 
 import model.*;
+import service.HistoryManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,15 +11,15 @@ import java.util.List;
 public class CSVFormat {
 
     // Получение задачи (подзадачи, эпика) из строки
-    protected static Task taskFromString(String value, Type type) {
+    public static Task taskFromString(String value, Type type) {
         String[] parts = value.split(",");
         int id = Integer.parseInt(parts[0]);
         TaskStatus status = TaskStatus.valueOf(parts[3]);
         LocalDateTime startTime;
-        if (parts[6].equals("Не определено")) {
+        if (parts[6].equals("null")) {
             startTime = null;
         } else {
-            startTime = LocalDateTime.parse(parts[6], TimeFormat.DATE_TIME_FORMAT_1);
+            startTime = LocalDateTime.parse(parts[6], TimeAdapter.DATE_TIME_FORMAT_1);
         }
         long duration = Integer.parseInt(parts[7]);
         switch (type) {
@@ -50,12 +51,12 @@ public class CSVFormat {
     }
 
     // Сохранение задачи в строку
-    protected static String taskToString(Task task) {
+    public static String taskToString(Task task) {
         String startTime;
         if (task.getStartTime() != null) {
-            startTime = task.getStartTime().format(TimeFormat.DATE_TIME_FORMAT_1);
+            startTime = task.getStartTime().format(TimeAdapter.DATE_TIME_FORMAT_1);
         } else {
-            startTime = "Не определено";
+            startTime = "null";
         }
         return task.getId() + "," + task.getTaskType() + "," + task.getName() + ","
                 + task.getStatus() + "," + task.getDescription() + "," + task.getEpicId() + ","
@@ -64,7 +65,7 @@ public class CSVFormat {
     }
 
     // Получение обратной последовательности вызова истории
-    protected static List<Integer> historyFromString(String value) {
+    public static List<Integer> historyFromString(String value) {
         LinkedList<Integer> numbersHistory = new LinkedList<>();
         String[] parts = value.split(",");
         for (int i = 1; i < parts.length; i++) {    // начинаем с единицы, чтобы в выборку не попала "ИСТОРИЯ"
@@ -80,7 +81,7 @@ public class CSVFormat {
     }
 
     // Сохранение менеджера истории в строку, состоящую из последовательности id задач
-    protected static String historyToString(HistoryManager manager) {
+    public static String historyToString(HistoryManager manager) {
         ArrayList<Task> history = (ArrayList<Task>) manager.getHistory();
         StringBuilder sb = new StringBuilder();
         sb.append(Type.HISTORY).append(",");

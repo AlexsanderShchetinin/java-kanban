@@ -59,7 +59,7 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
         taskManager.createTask(new Task("Second Task", "Make kanban",
                 "10.01.1970 10:01", 100000));
         Epic epic1 = taskManager.createEpic(new Epic("First Epic", "Learn to drive a car"));
-        Epic epic2 = taskManager.createEpic(new Epic("Empty Epic", "Empty description"));
+        taskManager.createEpic(new Epic("Empty Epic", "Empty description"));
         taskManager.createSubtask(
                 new Subtask("First Subtask", "Give a license", epic1.getId(),
                         "01.01.2001 00:00", 8505));
@@ -89,7 +89,6 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
 
         assertEquals(copy3.historyManager, taskManager.historyManager,
                 "Сохранение и восстановление менеджера FileBackedTaskManager после удаления задач не работает");
-
     }
 
     @Override
